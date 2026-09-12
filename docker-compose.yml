@@ -1,0 +1,78 @@
+name: vision-tasks
+
+services:
+  # --- Тестова база даних Postgres ---
+  db:
+    image: postgres:16-alpine
+    container_name: vision-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vision}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vision}
+      POSTGRES_DB: ${POSTGRES_DB:-vision_tasks}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vision} -d ${POSTGRES_DB:-vision_tasks}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+
+  # --- FastAPI ---
+  backend:
+    build: ./backend
+    container_name: vision-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-vision}:${POSTGRES_PASSWORD:-vision}@db:5432/${POSTGRES_DB:-vision_tasks}
+      UPLOAD_DIR: /app/uploads
+      MAX_UPLOAD_SIZE: 20971520
+      MAX_FILES_PER_TASK: 20
+      MAX_TASK_STORAGE: 104857600
+      TEXT_PREVIEW_LIMIT: 204800
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  # --- Next.js ---
+  frontend:
+    build: ./frontend
+    container_name: vision-frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:${BACKEND_PORT:-8000}
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+
+  # --- Веб-клієнт для перегляду бази (необов'язково) ---
+  adminer:
+    image: adminer:latest
+    container_name: vision-adminer
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
+  uploads:
