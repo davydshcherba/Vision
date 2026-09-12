@@ -1,0 +1,217 @@
+# Дашборд задач для студента
+
+Простий трекер навчальних завдань: назва, опис, дата виконання, статус і прикріплені файли.
+
+**Стек:** FastAPI + SQLAlchemy (async) · PostgreSQL · Next.js 15 (App Router, TypeScript) · Docker Compose.
+
+---
+
+## Запуск
+
+Потрібен лише Docker.
+
+```bash
+docker compose up --build
+```
+
+Перший запуск триває 2–4 хвилини (ставляться залежності). Далі:
+
+| Сервіс | Адреса |
+|---|---|
+| Дашборд (Next.js) | http://localhost:3000 |
+| API (FastAPI) | http://localhost:8000 |
+| Swagger-документація | http://localhost:8000/docs |
+| Adminer (перегляд БД) | http://localhost:8080 |
+| Postgres | `localhost:5432` |
+
+Міграції накочуються автоматично при старті бекенду — робити нічого не треба.
+
+### Тестові дані
+
+```bash
+docker compose exec backend python seed.py
+```
+
+Додасть 5 прикладів задач (зокрема одну прострочену й одну виконану).
+
+### Тести
+
+```bash
+docker compose exec backend python -m pytest      # або make test
+```
+
+32 тести на API: створення й фільтрація задач, завантаження файлів, часткові помилки
+пачки, відсутність осиротілих файлів на диску, заголовки інлайн-перегляду, каскадне
+видалення. Ганяються на окремій базі `vision_tasks_test` — робочі дані не чіпають.
+
+### Міграції
+
+Схему тримає Alembic, `alembic upgrade head` виконується автоматично при старті
+бекенда — накатувати вручну не треба. Після зміни моделей:
+
+```bash
+make migration m="додав поле пріоритету"   # згенерувати
+make migrate                               # накатити
+```
+
+### Корисні команди
+
+```bash
+docker compose up -d        # у фоні
+docker compose logs -f      # логи
+docker compose down         # зупинити
+docker compose down -v      # зупинити і стерти базу + завантажені файли
+```
+
+Або через `make`: `make up`, `make seed`, `make logs`, `make down`, `make reset`.
+
+### Доступ до бази
+
+Adminer на http://localhost:8080 → система `PostgreSQL`, сервер `db`, користувач `vision`, пароль `vision`, база `vision_tasks`.
+
+Або через psql:
+
+```bash
+docker compose exec db psql -U vision -d vision_tasks
+```
+
+---
+
+## Що вміє
+
+- Створення задачі: **назва**, **опис**, **дата виконання**, **статус**
+- Прикріплення **файлів** — і при створенні, і до вже наявної задачі (до 20 МБ на файл)
+- **Перегляд задачі** в окремому вікні: опис, дедлайн, статус, усі файли й дати
+- **Попередній перегляд файлів прямо на сторінці** — PDF відкривається у вбудованому
+  переглядачі браузера й гортається, картинки показуються як є, текстові файли
+  читаються моноширинним шрифтом. Качати файл, щоб просто глянути, не треба
+- **Drag & drop**: файли можна просто перетягнути на зону завантаження
+- **Прогрес завантаження** у відсотках (великий PDF більше не висить мовчки)
+- Розмір перевіряється **до відправки** — завеликий файл не поїде по мережі дарма
+- Один проблемний файл у пачці **не блокує решту**: решта зберігається, а він
+  потрапляє в попередження з причиною
+- Перейменування та видалення файлів, мініатюри картинок у списку
+- Редагування задачі та зміна статусу (До виконання / В роботі / Виконано)
+- Пошук за назвою й описом, фільтр за статусом
+- Лічильники зверху, зокрема **прострочені** дедлайни
+- Видалення задачі разом з її файлами (і з диска, і з БД)
+
+---
+
+## API
+
+| Метод | Шлях | Опис |
+|---|---|---|
+| `GET` | `/api/tasks?status=&q=` | Список задач (фільтр за статусом, пошук) |
+| `POST` | `/api/tasks` | Створити задачу |
+| `GET` | `/api/tasks/{id}` | Одна задача |
+| `PATCH` | `/api/tasks/{id}` | Оновити поля задачі |
+| `DELETE` | `/api/tasks/{id}` | Видалити задачу з файлами |
+| `POST` | `/api/tasks/{id}/attachments` | Завантажити файли (multipart, поле `files`) |
+| `GET` | `/api/attachments/{id}/view` | Показати файл у браузері (`Content-Disposition: inline`) |
+| `GET` | `/api/attachments/{id}/download` | Скачати файл |
+| `DELETE` | `/api/attachments/{id}` | Видалити файл |
+| `PATCH` | `/api/attachments/{id}` | Перейменувати файл |
+| `GET` | `/api/stats` | Лічильники для дашборда |
+| `GET` | `/api/limits` | Ліміти сервера (їх читає фронтенд) |
+| `GET` | `/health` | Перевірка живості |
+
+Приклад:
+
+```bash
+curl -X POST http://localhost:8000/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Курсова робота","description":"Розділ 1","due_date":"2026-10-01"}'
+
+curl -X POST http://localhost:8000/api/tasks/1/attachments -F "files=@конспект.pdf"
+```
+
+Завантаження повертає, що саме збереглося, а що ні:
+
+```json
+{
+  "uploaded": [{ "id": 1, "filename": "конспект.pdf", "preview": "pdf", "size": 91234 }],
+  "failed":   [{ "filename": "лекція.mp4", "error": "Файл завеликий, максимум 20 МБ" }]
+}
+```
+
+Якщо не зберігся **жодний** файл — повертається `400` зі списком причин.
+
+---
+
+## Структура
+
+```
+.
+├── docker-compose.yml      # db + backend + frontend + adminer
+├── .env.example            # порти й креденшели (опційно)
+├── Makefile
+├── backend/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── requirements-dev.txt   # pytest + httpx
+│   ├── alembic.ini
+│   ├── migrations/            # версії схеми
+│   ├── tests/                 # 32 тести на API
+│   ├── seed.py                # тестові дані
+│   └── app/
+│       ├── main.py            # FastAPI, CORS, очікування БД
+│       ├── config.py          # налаштування й ліміти зі змінних середовища
+│       ├── database.py        # async engine + сесії
+│       ├── models.py          # Task, Attachment
+│       ├── schemas.py         # Pydantic-схеми
+│       ├── storage.py         # збереження файлів на диск
+│       ├── preview.py         # який файл можна показати інлайн і як
+│       └── routers/
+│           ├── tasks.py
+│           └── attachments.py
+└── frontend/
+    ├── Dockerfile
+    ├── app/
+    │   ├── layout.tsx
+    │   ├── page.tsx        # сам дашборд
+    │   └── globals.css
+    ├── components/
+    │   ├── StatCards.tsx
+    │   ├── TaskForm.tsx
+    │   ├── TaskCard.tsx
+    │   ├── TaskDetail.tsx     # вікно перегляду задачі
+    │   ├── FilePreview.tsx    # PDF / картинка / текст у сторінці
+    │   ├── FileDropzone.tsx   # drag & drop
+    │   └── UploadProgress.tsx
+    └── lib/
+        ├── api.ts            # клієнт до FastAPI (завантаження через XHR — заради прогресу)
+        ├── files.ts          # перевірка розміру до відправки
+        ├── types.ts
+        └── format.ts
+```
+
+---
+
+## Дані та файли
+
+- Задачі — у Postgres (том `pgdata`), файли — на диску в томі `uploads`, а їх метадані (ім'я, розмір, MIME) — в таблиці `attachments`.
+- Інлайн (`/view`) віддаються тільки PDF і растрові картинки. Будь-який текст, включно з `.html`, примусово віддається як `text/plain`, а SVG та решта форматів — лише завантаженням: інакше завантажений файл міг би виконати скрипт у походженні API.
+- Обидва томи переживають `docker compose down`; стираються лише через `docker compose down -v`.
+- Видалення задачі каскадно прибирає її файли і з БД, і з диска.
+
+## Розробка без Docker
+
+Бекенд (потрібен запущений Postgres):
+
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+export DATABASE_URL="postgresql+asyncpg://vision:vision@localhost:5432/vision_tasks"
+export UPLOAD_DIR="./uploads"
+uvicorn app.main:app --reload
+```
+
+Фронтенд:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
