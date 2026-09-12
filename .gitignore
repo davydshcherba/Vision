@@ -10,7 +10,6 @@ backend/uploads/
 node_modules/
 .next/
 out/
-npm-debug.log*
 *.tsbuildinfo
 # генерується самим Next при кожному запуску
 next-env.d.ts

@@ -1,12 +1,14 @@
-FROM node:22-alpine
+FROM oven/bun:1-alpine
 
 WORKDIR /app
 
-COPY package.json ./
-RUN npm install
+# Спершу лише маніфести — шар із залежностями кешується між збірками.
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 COPY . .
 
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+# --bun: next dev виконує рантайм bun, а не node-шим з образу.
+CMD ["bun", "--bun", "run", "dev"]

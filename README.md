@@ -2,8 +2,8 @@
 
 Простий трекер навчальних завдань: назва, опис, дата виконання, статус і прикріплені файли.
 
-**Стек:** FastAPI + SQLAlchemy (async) · PostgreSQL · Next.js 15 (App Router, TypeScript) · Docker Compose ·
-залежності бекенду — [uv](https://docs.astral.sh/uv/).
+**Стек:** FastAPI + SQLAlchemy (async) · PostgreSQL · Next.js 15 (App Router, TypeScript) · Docker Compose.
+Залежності: бекенд — [uv](https://docs.astral.sh/uv/), фронтенд — [bun](https://bun.sh/).
 
 ---
 
@@ -166,6 +166,8 @@ curl -X POST http://localhost:8000/api/tasks/1/attachments -F "files=@консп
 │           └── preview.py     # який файл можна показати інлайн і як
 └── frontend/
     ├── Dockerfile
+    ├── package.json
+    ├── bun.lock            # зафіксовані версії (bun)
     ├── app/
     │   ├── layout.tsx
     │   ├── page.tsx        # сам дашборд
@@ -226,10 +228,13 @@ uv run pytest                # тести
 оновить лок. Після ручного правлення `pyproject.toml` — `uv lock` (або `make lock`) і
 `docker compose build backend`.
 
-Фронтенд:
+Фронтенд (потрібен [bun](https://bun.sh/)):
 
 ```bash
 cd frontend
-npm install
-npm run dev
+bun install                  # поставить залежності за bun.lock
+bun run dev
 ```
+
+Додати пакет: `bun add <пакет>` (`bun add -d <пакет>` для dev-залежності) — лок
+оновиться сам, далі `docker compose build frontend`.
