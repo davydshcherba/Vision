@@ -21,7 +21,7 @@ async def save_upload(file: UploadFile, upload_dir: Path, max_size: int) -> tupl
                 size += len(chunk)
                 if size > max_size:
                     raise HTTPException(
-                        status_code=413,  # назва константи різниться між версіями starlette
+                        status_code=413,
                         detail=f"Файл завеликий, максимум {max_size // (1024 * 1024)} МБ",
                     )
                 out.write(chunk)

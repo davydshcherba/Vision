@@ -2,7 +2,8 @@
 
 Простий трекер навчальних завдань: назва, опис, дата виконання, статус і прикріплені файли.
 
-**Стек:** FastAPI + SQLAlchemy (async) · PostgreSQL · Next.js 15 (App Router, TypeScript) · Docker Compose.
+**Стек:** FastAPI + SQLAlchemy (async) · PostgreSQL · Next.js 15 (App Router, TypeScript) · Docker Compose ·
+залежності бекенду — [uv](https://docs.astral.sh/uv/).
 
 ---
 
@@ -26,18 +27,10 @@ docker compose up --build
 
 Міграції накочуються автоматично при старті бекенду — робити нічого не треба.
 
-### Тестові дані
-
-```bash
-docker compose exec backend python seed.py
-```
-
-Додасть 5 прикладів задач (зокрема одну прострочену й одну виконану).
-
 ### Тести
 
 ```bash
-docker compose exec backend python -m pytest      # або make test
+docker compose exec backend pytest      # або make test
 ```
 
 32 тести на API: створення й фільтрація задач, завантаження файлів, часткові помилки
@@ -63,7 +56,7 @@ docker compose down         # зупинити
 docker compose down -v      # зупинити і стерти базу + завантажені файли
 ```
 
-Або через `make`: `make up`, `make seed`, `make logs`, `make down`, `make reset`.
+Або через `make`: `make up`, `make test`, `make logs`, `make down`, `make reset`.
 
 ### Доступ до бази
 
@@ -148,14 +141,13 @@ curl -X POST http://localhost:8000/api/tasks/1/attachments -F "files=@консп
 ├── Makefile
 ├── backend/
 │   ├── Dockerfile
-│   ├── requirements.txt
-│   ├── requirements-dev.txt   # pytest + httpx
+│   ├── pyproject.toml         # залежності, dev-група, налаштування pytest
+│   ├── uv.lock                # зафіксовані версії (uv)
 │   ├── alembic.ini
 │   ├── migrations/            # версії схеми
-│   ├── tests/                 # 32 тести на API
-│   ├── seed.py                # тестові дані
+│   ├── tests/                 # тести на API
 │   └── app/
-│       ├── main.py            # FastAPI, CORS, очікування БД
+│       ├── main.py            # FastAPI, CORS
 │       ├── config.py          # налаштування й ліміти зі змінних середовища
 │       ├── database.py        # async engine + сесії
 │       ├── models.py          # Task, Attachment
@@ -197,16 +189,22 @@ curl -X POST http://localhost:8000/api/tasks/1/attachments -F "files=@консп
 
 ## Розробка без Docker
 
-Бекенд (потрібен запущений Postgres):
+Бекенд (потрібен запущений Postgres і [uv](https://docs.astral.sh/uv/)):
 
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+uv sync                      # створить .venv за uv.lock
 export DATABASE_URL="postgresql+asyncpg://vision:vision@localhost:5432/vision_tasks"
 export UPLOAD_DIR="./uploads"
-uvicorn app.main:app --reload
+uv run alembic upgrade head
+uv run uvicorn app.main:app --reload
+uv run pytest                # тести
 ```
+
+Залежності живуть у `backend/pyproject.toml`, точні версії — в `uv.lock`. Щоб додати
+пакет: `uv add <пакет>` (або `uv add --dev <пакет>` для інструментів розробки) — uv сам
+оновить лок. Після ручного правлення `pyproject.toml` — `uv lock` (або `make lock`) і
+`docker compose build backend`.
 
 Фронтенд:
 

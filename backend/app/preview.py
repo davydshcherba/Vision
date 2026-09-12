@@ -5,8 +5,9 @@
 """
 
 from pathlib import Path
+from typing import Literal
 
-PreviewKind = str  # "pdf" | "image" | "text" | None
+PreviewKind = Literal["pdf", "image", "text"]
 
 IMAGE_TYPES = {
     "image/png",

@@ -1,4 +1,4 @@
-.PHONY: up down restart logs seed test migrate migration reset ps shell-db shell-api
+.PHONY: up down restart logs test migrate migration lock reset ps shell-db shell-api
 
 up:            ## Підняти весь проєкт
 	docker compose up --build
@@ -12,17 +12,17 @@ restart:       ## Перезапустити
 logs:          ## Логи всіх сервісів
 	docker compose logs -f
 
-seed:          ## Наповнити базу тестовими задачами
-	docker compose exec backend python seed.py
-
 test:          ## Прогнати тести бекенду
-	docker compose exec backend python -m pytest
+	docker compose exec backend pytest
 
 migrate:       ## Накатити міграції вручну
 	docker compose exec backend alembic upgrade head
 
 migration:     ## Створити міграцію: make migration m="опис змін"
 	docker compose exec backend alembic revision --autogenerate -m "$(m)"
+
+lock:          ## Перерахувати uv.lock після зміни залежностей
+	cd backend && uv lock
 
 reset:         ## Знести все разом з базою і файлами
 	docker compose down -v

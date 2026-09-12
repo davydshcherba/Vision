@@ -4,6 +4,7 @@
 пишуться у тимчасову теку pytest — робочі дані не чіпаються.
 """
 
+import asyncio
 from collections.abc import AsyncGenerator
 
 import pytest
@@ -18,31 +19,29 @@ from app.main import app
 
 TEST_DB = "vision_tasks_test"
 
-_database_created = False
-
 
 def _url_for(database: str) -> str:
     return settings.database_url.rsplit("/", 1)[0] + f"/{database}"
 
 
-async def _ensure_database() -> None:
-    global _database_created
-    if _database_created:
-        return
-
+async def _recreate_database() -> None:
     admin = create_async_engine(_url_for("postgres"), isolation_level="AUTOCOMMIT")
     async with admin.connect() as conn:
         await conn.execute(text(f'DROP DATABASE IF EXISTS "{TEST_DB}" WITH (FORCE)'))
         await conn.execute(text(f'CREATE DATABASE "{TEST_DB}"'))
     await admin.dispose()
-    _database_created = True
+
+
+@pytest.fixture(scope="session")
+def database_url() -> str:
+    """Чиста тестова база — створюється один раз на запуск pytest."""
+    asyncio.run(_recreate_database())
+    return _url_for(TEST_DB)
 
 
 @pytest_asyncio.fixture
-async def engine() -> AsyncGenerator[AsyncEngine, None]:
-    await _ensure_database()
-
-    test_engine = create_async_engine(_url_for(TEST_DB))
+async def engine(database_url) -> AsyncGenerator[AsyncEngine, None]:
+    test_engine = create_async_engine(database_url)
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)

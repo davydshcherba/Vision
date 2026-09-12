@@ -1,10 +1,9 @@
 from datetime import date, datetime
-from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from .models import TaskStatus
-from .preview import preview_kind
+from .preview import PreviewKind, preview_kind
 
 
 class AttachmentRead(BaseModel):
@@ -16,22 +15,22 @@ class AttachmentRead(BaseModel):
     size: int
     created_at: datetime
 
-    @computed_field  # type: ignore[prop-decorator]
+    @computed_field
     @property
     def download_url(self) -> str:
         return f"/api/attachments/{self.id}/download"
 
-    @computed_field  # type: ignore[prop-decorator]
+    @computed_field
     @property
     def view_url(self) -> str:
         """Той самий файл, але для перегляду прямо в сторінці."""
         return f"/api/attachments/{self.id}/view"
 
-    @computed_field  # type: ignore[prop-decorator]
+    @computed_field
     @property
-    def preview(self) -> Literal["pdf", "image", "text"] | None:
+    def preview(self) -> PreviewKind | None:
         """Як фронтенд має показати файл. None — тільки завантаження."""
-        return preview_kind(self.content_type, self.filename)  # type: ignore[return-value]
+        return preview_kind(self.content_type, self.filename)
 
 
 class AttachmentUpdate(BaseModel):

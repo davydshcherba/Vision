@@ -1,13 +1,19 @@
-FROM python:3.12-slim
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
+# Віртуальне оточення тримаємо поза /app: у docker-compose тека проєкту
+# перекривається бінд-маунтом, і .venv усередині неї став би недоступним.
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    PATH=/opt/venv/bin:$PATH
 
 WORKDIR /app
 
-# requirements-dev тягне за собою requirements — тести доступні одразу в контейнері
-COPY requirements.txt requirements-dev.txt ./
-RUN pip install --no-cache-dir -r requirements-dev.txt
+# Спершу лише маніфести — шар із залежностями кешується між збірками.
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen
 
 COPY . .
 
