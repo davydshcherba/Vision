@@ -146,17 +146,24 @@ curl -X POST http://localhost:8000/api/tasks/1/attachments -F "files=@консп
 │   ├── alembic.ini
 │   ├── migrations/            # версії схеми
 │   ├── tests/                 # тести на API
-│   └── app/
-│       ├── main.py            # FastAPI, CORS
-│       ├── config.py          # налаштування й ліміти зі змінних середовища
-│       ├── database.py        # async engine + сесії
-│       ├── models.py          # Task, Attachment
-│       ├── schemas.py         # Pydantic-схеми
-│       ├── storage.py         # збереження файлів на диск
-│       ├── preview.py         # який файл можна показати інлайн і як
-│       └── routers/
-│           ├── tasks.py
-│           └── attachments.py
+│   └── app/                   # по модулю на домен
+│       ├── main.py            # FastAPI, CORS, підключення роутерів
+│       ├── core/
+│       │   ├── config.py      # налаштування й ліміти зі змінних середовища
+│       │   └── database.py    # Base, async engine + сесії
+│       ├── tasks/
+│       │   ├── router.py      # HTTP: /api/tasks, /api/stats
+│       │   ├── service.py     # вибірка, зміна, лічильники, видалення
+│       │   ├── models.py      # Task, TaskStatus
+│       │   └── schemas.py
+│       ├── attachments/
+│       │   ├── router.py      # HTTP: /api/attachments, завантаження, /api/limits
+│       │   ├── service.py     # ліміти, пачка файлів, прибирання за собою
+│       │   ├── models.py      # Attachment
+│       │   └── schemas.py
+│       └── files/             # робота з диском, спільна для модулів
+│           ├── storage.py     # збереження файлів на диск
+│           └── preview.py     # який файл можна показати інлайн і як
 └── frontend/
     ├── Dockerfile
     ├── app/
@@ -180,6 +187,17 @@ curl -X POST http://localhost:8000/api/tasks/1/attachments -F "files=@консп
 
 ---
 
+## Архітектура бекенду
+
+Кожен домен — самодостатній пакет: `router.py` відповідає лише за HTTP (розбір
+запиту й формування відповіді), уся логіка живе в `service.py`, а `models.py` і
+`schemas.py` описують домен для бази й для API. Спільне лежить у `core/`
+(налаштування, сесії) та `files/` (диск і правила інлайн-перегляду).
+
+Залежності між модулями односторонні: `attachments` знає про `tasks` (файл
+завжди належить задачі), у зворотний бік — лише зв'язок SQLAlchemy, який
+оголошує `tasks/models.py`. Тому імпорти не закільцьовуються.
+
 ## Дані та файли
 
 - Задачі — у Postgres (том `pgdata`), файли — на диску в томі `uploads`, а їх метадані (ім'я, розмір, MIME) — в таблиці `attachments`.
@@ -194,12 +212,14 @@ curl -X POST http://localhost:8000/api/tasks/1/attachments -F "files=@консп
 ```bash
 cd backend
 uv sync                      # створить .venv за uv.lock
-export DATABASE_URL="postgresql+asyncpg://vision:vision@localhost:5432/vision_tasks"
-export UPLOAD_DIR="./uploads"
 uv run alembic upgrade head
 uv run uvicorn app.main:app --reload
 uv run pytest                # тести
 ```
+
+Дефолти вже налаштовані на цей сценарій: база — `vision_tasks` на `localhost:5432`
+(та сама, що піднімає docker compose), файли — тека `backend/uploads`. Інші значення
+задаються змінними `DATABASE_URL` і `UPLOAD_DIR`.
 
 Залежності живуть у `backend/pyproject.toml`, точні версії — в `uv.lock`. Щоб додати
 пакет: `uv add <пакет>` (або `uv add --dev <пакет>` для інструментів розробки) — uv сам

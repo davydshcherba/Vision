@@ -3,10 +3,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import models  # noqa: F401  — реєструє таблиці у метаданих
-from .config import settings
-from .database import engine
-from .routers import attachments, tasks
+from .attachments.router import router as attachments_router
+from .core.config import settings
+from .core.database import engine
+from .tasks.router import router as tasks_router
 
 
 @asynccontextmanager
@@ -33,8 +33,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(tasks.router)
-app.include_router(attachments.router)
+app.include_router(tasks_router)
+app.include_router(attachments_router)
 
 
 @app.get("/health", tags=["service"])

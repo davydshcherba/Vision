@@ -13,8 +13,8 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 
-from app.config import settings
-from app.database import Base, get_session
+from app.core.config import settings
+from app.core.database import Base, get_session
 from app.main import app
 
 TEST_DB = "vision_tasks_test"

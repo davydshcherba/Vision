@@ -8,8 +8,11 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    database_url: str = "postgresql+asyncpg://vision:vision@localhost:5432/vision"
-    upload_dir: str = "/app/uploads"
+    # Дефолти розраховані на запуск без Docker: база з docker-compose, яка
+    # проброшена на localhost, і тека поруч із кодом. У контейнері обидва
+    # значення перекриває docker-compose (DATABASE_URL, UPLOAD_DIR).
+    database_url: str = "postgresql+asyncpg://vision:vision@localhost:5432/vision_tasks"
+    upload_dir: str = "uploads"
     cors_origins: str = "http://localhost:3000"
 
     # 20 МБ на один файл

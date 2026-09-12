@@ -6,9 +6,12 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from app import models  # noqa: F401 — щоб таблиці потрапили в метадані
-from app.config import settings
-from app.database import Base
+# Обидва імпорти реєструють таблиці в Base.metadata — без них autogenerate
+# не побачив би моделей.
+from app.attachments import models as attachments_models  # noqa: F401
+from app.core.config import settings
+from app.core.database import Base
+from app.tasks import models as tasks_models  # noqa: F401
 
 config = context.config
 
