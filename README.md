@@ -1,68 +1,68 @@
-# Дашборд задач для студента
+# Student Task Dashboard
 
-Простий трекер навчальних завдань: назва, опис, дата виконання, статус і прикріплені файли.
+A simple tracker for study assignments: title, description, due date, status and attached files.
 
-**Стек:** FastAPI + SQLAlchemy (async) · PostgreSQL · Next.js 15 (App Router, TypeScript) · Docker Compose.
-Залежності: бекенд — [uv](https://docs.astral.sh/uv/), фронтенд — [bun](https://bun.sh/).
+**Stack:** FastAPI + SQLAlchemy (async) · PostgreSQL · Next.js 15 (App Router, TypeScript) · Docker Compose.
+Dependencies: backend — [uv](https://docs.astral.sh/uv/), frontend — [bun](https://bun.sh/).
 
 ---
 
-## Запуск
+## Running
 
-Потрібен лише Docker.
+Only Docker is required.
 
 ```bash
 docker compose up --build
 ```
 
-Перший запуск триває 2–4 хвилини (ставляться залежності). Далі:
+The first start takes 2–4 minutes (dependencies are installed). After that:
 
-| Сервіс | Адреса |
+| Service | Address |
 |---|---|
-| Дашборд (Next.js) | http://localhost:3000 |
+| Dashboard (Next.js) | http://localhost:3000 |
 | API (FastAPI) | http://localhost:8000 |
-| Swagger-документація | http://localhost:8000/docs |
-| Adminer (перегляд БД) | http://localhost:8080 |
+| Swagger docs | http://localhost:8000/docs |
+| Adminer (DB viewer) | http://localhost:8080 |
 | Postgres | `localhost:5432` |
 
-Міграції накочуються автоматично при старті бекенду — робити нічого не треба.
+Migrations are applied automatically when the backend starts — nothing to do.
 
-### Тести
-
-```bash
-docker compose exec backend pytest      # або make test
-```
-
-32 тести на API: створення й фільтрація задач, завантаження файлів, часткові помилки
-пачки, відсутність осиротілих файлів на диску, заголовки інлайн-перегляду, каскадне
-видалення. Ганяються на окремій базі `vision_tasks_test` — робочі дані не чіпають.
-
-### Міграції
-
-Схему тримає Alembic, `alembic upgrade head` виконується автоматично при старті
-бекенда — накатувати вручну не треба. Після зміни моделей:
+### Tests
 
 ```bash
-make migration m="додав поле пріоритету"   # згенерувати
-make migrate                               # накатити
+docker compose exec backend pytest      # or make test
 ```
 
-### Корисні команди
+32 API tests: creating and filtering tasks, file uploads, partial batch failures,
+no orphaned files left on disk, inline preview headers, cascade deletion. They run
+against a separate `vision_tasks_test` database — working data is never touched.
+
+### Migrations
+
+The schema is managed by Alembic; `alembic upgrade head` runs automatically when the
+backend starts — no need to apply it by hand. After changing models:
 
 ```bash
-docker compose up -d        # у фоні
-docker compose logs -f      # логи
-docker compose down         # зупинити
-docker compose down -v      # зупинити і стерти базу + завантажені файли
+make migration m="add priority field"   # generate
+make migrate                            # apply
 ```
 
-Або через `make`: `make up`, `make test`, `make logs`, `make down`, `make reset`.
+### Useful commands
 
-### Доступ до бази
+```bash
+docker compose up -d        # in the background
+docker compose logs -f      # logs
+docker compose down         # stop
+docker compose down -v      # stop and wipe the database + uploaded files
+```
 
-Adminer на http://localhost:8080 → система `PostgreSQL`, сервер `db`, користувач `vision`, пароль `vision`, база `vision_tasks`.
+Or via `make`: `make up`, `make test`, `make logs`, `make down`, `make reset`.
 
-Або через psql:
+### Database access
+
+Adminer at http://localhost:8080 → system `PostgreSQL`, server `db`, user `vision`, password `vision`, database `vision_tasks`.
+
+Or via psql:
 
 ```bash
 docker compose exec db psql -U vision -d vision_tasks
@@ -70,174 +70,178 @@ docker compose exec db psql -U vision -d vision_tasks
 
 ---
 
-## Що вміє
+## Features
 
-- Створення задачі: **назва**, **опис**, **дата виконання**, **статус**
-- Прикріплення **файлів** — і при створенні, і до вже наявної задачі (до 20 МБ на файл)
-- **Перегляд задачі** в окремому вікні: опис, дедлайн, статус, усі файли й дати
-- **Попередній перегляд файлів прямо на сторінці** — PDF відкривається у вбудованому
-  переглядачі браузера й гортається, картинки показуються як є, текстові файли
-  читаються моноширинним шрифтом. Качати файл, щоб просто глянути, не треба
-- **Дошка з трьох колонок** — До виконання / В роботі / Виконано. Усередині колонки
-  задачі йдуть за дедлайном: найближчий зверху, без дати — в кінці
-- **Drag & drop**: картку можна перетягнути в іншу колонку (або посунути стрілками
-  ← →), файли — просто кинути на картку чи на зону завантаження
-- **Прогрес завантаження** у відсотках (великий PDF більше не висить мовчки)
-- Розмір перевіряється **до відправки** — завеликий файл не поїде по мережі дарма
-- Один проблемний файл у пачці **не блокує решту**: решта зберігається, а він
-  потрапляє в попередження з причиною
-- Перейменування та видалення файлів, мініатюри картинок у списку
-- Редагування задачі та зміна статусу (До виконання / В роботі / Виконано)
-- Пошук за назвою й описом, фільтр за статусом — лишається одна колонка
-- Лічильники зверху, зокрема **прострочені** дедлайни
-- Видалення задачі разом з її файлами (і з диска, і з БД)
+- Create a task: **title**, **description**, **due date**, **status**
+- Attach **files** — both when creating a task and to an existing one (up to 20 MB per file)
+- **Task view** in a separate modal: description, deadline, status, all files and dates
+- **In-page file preview** — PDFs open in the browser's built-in viewer and can be
+  scrolled, images are shown as is, text files are rendered in a monospace font.
+  No need to download a file just to take a look
+- **Three-column board** — To do / In progress / Done. Within a column tasks are
+  sorted by deadline: nearest first, undated ones at the end
+- **Drag & drop**: a card can be dragged to another column (or moved with the ← →
+  arrows), files can simply be dropped onto a card or the upload zone
+- **Upload progress** in percent (a large PDF no longer hangs silently)
+- File size is checked **before sending** — an oversized file won't travel over the network for nothing
+- One bad file in a batch **doesn't block the rest**: the others are saved, and it
+  shows up in a warning with the reason
+- Rename and delete files, image thumbnails in the file list
+- Edit a task and change its status (To do / In progress / Done)
+- Search by title and description, filter by status — leaves a single column
+- Counters at the top, including **overdue** deadlines
+- Delete a task together with its files (both from disk and from the DB)
+
+> The UI and API error messages are in Ukrainian.
 
 ---
 
 ## API
 
-| Метод | Шлях | Опис |
+| Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/tasks?status=&q=` | Список задач (фільтр за статусом, пошук) |
-| `POST` | `/api/tasks` | Створити задачу |
-| `GET` | `/api/tasks/{id}` | Одна задача |
-| `PATCH` | `/api/tasks/{id}` | Оновити поля задачі |
-| `DELETE` | `/api/tasks/{id}` | Видалити задачу з файлами |
-| `POST` | `/api/tasks/{id}/attachments` | Завантажити файли (multipart, поле `files`) |
-| `GET` | `/api/attachments/{id}/view` | Показати файл у браузері (`Content-Disposition: inline`) |
-| `GET` | `/api/attachments/{id}/download` | Скачати файл |
-| `DELETE` | `/api/attachments/{id}` | Видалити файл |
-| `PATCH` | `/api/attachments/{id}` | Перейменувати файл |
-| `GET` | `/api/stats` | Лічильники для дашборда |
-| `GET` | `/api/limits` | Ліміти сервера (їх читає фронтенд) |
-| `GET` | `/health` | Перевірка живості |
+| `GET` | `/api/tasks?status=&q=` | List tasks (status filter, search) |
+| `POST` | `/api/tasks` | Create a task |
+| `GET` | `/api/tasks/{id}` | Get a single task |
+| `PATCH` | `/api/tasks/{id}` | Update task fields |
+| `DELETE` | `/api/tasks/{id}` | Delete a task with its files |
+| `POST` | `/api/tasks/{id}/attachments` | Upload files (multipart, field `files`) |
+| `GET` | `/api/attachments/{id}/view` | Show a file in the browser (`Content-Disposition: inline`) |
+| `GET` | `/api/attachments/{id}/download` | Download a file |
+| `DELETE` | `/api/attachments/{id}` | Delete a file |
+| `PATCH` | `/api/attachments/{id}` | Rename a file |
+| `GET` | `/api/stats` | Dashboard counters |
+| `GET` | `/api/limits` | Server limits (read by the frontend) |
+| `GET` | `/health` | Liveness check |
 
-Приклад:
+Example:
 
 ```bash
 curl -X POST http://localhost:8000/api/tasks \
   -H "Content-Type: application/json" \
-  -d '{"title":"Курсова робота","description":"Розділ 1","due_date":"2026-10-01"}'
+  -d '{"title":"Term paper","description":"Chapter 1","due_date":"2026-10-01"}'
 
-curl -X POST http://localhost:8000/api/tasks/1/attachments -F "files=@конспект.pdf"
+curl -X POST http://localhost:8000/api/tasks/1/attachments -F "files=@notes.pdf"
 ```
 
-Завантаження повертає, що саме збереглося, а що ні:
+An upload reports exactly what was saved and what wasn't:
 
 ```json
 {
-  "uploaded": [{ "id": 1, "filename": "конспект.pdf", "preview": "pdf", "size": 91234 }],
-  "failed":   [{ "filename": "лекція.mp4", "error": "Файл завеликий, максимум 20 МБ" }]
+  "uploaded": [{ "id": 1, "filename": "notes.pdf", "preview": "pdf", "size": 91234 }],
+  "failed":   [{ "filename": "lecture.mp4", "error": "Файл завеликий, максимум 20 МБ" }]
 }
 ```
 
-Якщо не зберігся **жодний** файл — повертається `400` зі списком причин.
+If **no** file was saved, `400` is returned with the list of reasons.
 
 ---
 
-## Структура
+## Structure
 
 ```
 .
 ├── docker-compose.yml      # db + backend + frontend + adminer
-├── .env.example            # порти й креденшели (опційно)
+├── .env.example            # ports and credentials (optional)
 ├── Makefile
 ├── backend/
 │   ├── Dockerfile
-│   ├── pyproject.toml         # залежності, dev-група, налаштування pytest
-│   ├── uv.lock                # зафіксовані версії (uv)
+│   ├── pyproject.toml         # dependencies, dev group, pytest settings
+│   ├── uv.lock                # pinned versions (uv)
 │   ├── alembic.ini
-│   ├── migrations/            # версії схеми
-│   ├── tests/                 # тести на API
-│   └── app/                   # по модулю на домен
-│       ├── main.py            # FastAPI, CORS, підключення роутерів
+│   ├── migrations/            # schema versions
+│   ├── tests/                 # API tests
+│   └── app/                   # one module per domain
+│       ├── main.py            # FastAPI, CORS, router registration
 │       ├── core/
-│       │   ├── config.py      # налаштування й ліміти зі змінних середовища
-│       │   └── database.py    # Base, async engine + сесії
+│       │   ├── config.py      # settings and limits from environment variables
+│       │   └── database.py    # Base, async engine + sessions
 │       ├── tasks/
 │       │   ├── router.py      # HTTP: /api/tasks, /api/stats
-│       │   ├── service.py     # вибірка, зміна, лічильники, видалення
+│       │   ├── service.py     # querying, updating, counters, deletion
 │       │   ├── models.py      # Task, TaskStatus
 │       │   └── schemas.py
 │       ├── attachments/
-│       │   ├── router.py      # HTTP: /api/attachments, завантаження, /api/limits
-│       │   ├── service.py     # ліміти, пачка файлів, прибирання за собою
+│       │   ├── router.py      # HTTP: /api/attachments, uploads, /api/limits
+│       │   ├── service.py     # limits, file batches, cleanup
 │       │   ├── models.py      # Attachment
 │       │   └── schemas.py
-│       └── files/             # робота з диском, спільна для модулів
-│           ├── storage.py     # збереження файлів на диск
-│           └── preview.py     # який файл можна показати інлайн і як
+│       └── files/             # disk handling shared between modules
+│           ├── storage.py     # saving files to disk
+│           └── preview.py     # which files can be shown inline and how
 └── frontend/
     ├── Dockerfile
     ├── package.json
-    ├── bun.lock            # зафіксовані версії (bun)
+    ├── bun.lock            # pinned versions (bun)
     ├── app/
     │   ├── layout.tsx
-    │   ├── page.tsx        # сам дашборд
+    │   ├── page.tsx        # the dashboard itself
     │   └── globals.css
     ├── components/
     │   ├── StatCards.tsx
     │   ├── TaskForm.tsx
+    │   ├── TaskBoard.tsx      # kanban board
     │   ├── TaskCard.tsx
-    │   ├── TaskDetail.tsx     # вікно перегляду задачі
-    │   ├── FilePreview.tsx    # PDF / картинка / текст у сторінці
+    │   ├── TaskDetail.tsx     # task view modal
+    │   ├── FilePreview.tsx    # PDF / image / text in the page
     │   ├── FileDropzone.tsx   # drag & drop
+    │   ├── LinkifiedText.tsx  # clickable links in descriptions
     │   └── UploadProgress.tsx
     └── lib/
-        ├── api.ts            # клієнт до FastAPI (завантаження через XHR — заради прогресу)
-        ├── files.ts          # перевірка розміру до відправки
+        ├── api.ts            # FastAPI client (uploads via XHR — for progress)
+        ├── files.ts          # size check before sending
         ├── types.ts
         └── format.ts
 ```
 
 ---
 
-## Архітектура бекенду
+## Backend architecture
 
-Кожен домен — самодостатній пакет: `router.py` відповідає лише за HTTP (розбір
-запиту й формування відповіді), уся логіка живе в `service.py`, а `models.py` і
-`schemas.py` описують домен для бази й для API. Спільне лежить у `core/`
-(налаштування, сесії) та `files/` (диск і правила інлайн-перегляду).
+Each domain is a self-contained package: `router.py` handles HTTP only (parsing the
+request and shaping the response), all logic lives in `service.py`, and `models.py` and
+`schemas.py` describe the domain for the database and for the API. Shared code lives in
+`core/` (settings, sessions) and `files/` (disk and inline preview rules).
 
-Залежності між модулями односторонні: `attachments` знає про `tasks` (файл
-завжди належить задачі), у зворотний бік — лише зв'язок SQLAlchemy, який
-оголошує `tasks/models.py`. Тому імпорти не закільцьовуються.
+Dependencies between modules are one-way: `attachments` knows about `tasks` (a file
+always belongs to a task); in the other direction there is only the SQLAlchemy
+relationship declared in `tasks/models.py`. So imports never form a cycle.
 
-## Дані та файли
+## Data and files
 
-- Задачі — у Postgres (том `pgdata`), файли — на диску в томі `uploads`, а їх метадані (ім'я, розмір, MIME) — в таблиці `attachments`.
-- Інлайн (`/view`) віддаються тільки PDF і растрові картинки. Будь-який текст, включно з `.html`, примусово віддається як `text/plain`, а SVG та решта форматів — лише завантаженням: інакше завантажений файл міг би виконати скрипт у походженні API.
-- Обидва томи переживають `docker compose down`; стираються лише через `docker compose down -v`.
-- Видалення задачі каскадно прибирає її файли і з БД, і з диска.
+- Tasks live in Postgres (volume `pgdata`), files on disk in the `uploads` volume, and their metadata (name, size, MIME) in the `attachments` table.
+- Only PDFs and raster images are served inline (`/view`). Any text, including `.html`, is forcibly served as `text/plain`, and SVG and all other formats are download-only: otherwise an uploaded file could run a script in the API's origin.
+- Both volumes survive `docker compose down`; they are wiped only by `docker compose down -v`.
+- Deleting a task cascades to its files, both in the DB and on disk.
 
-## Розробка без Docker
+## Development without Docker
 
-Бекенд (потрібен запущений Postgres і [uv](https://docs.astral.sh/uv/)):
+Backend (requires a running Postgres and [uv](https://docs.astral.sh/uv/)):
 
 ```bash
 cd backend
-uv sync                      # створить .venv за uv.lock
+uv sync                      # creates .venv from uv.lock
 uv run alembic upgrade head
 uv run uvicorn app.main:app --reload
-uv run pytest                # тести
+uv run pytest                # tests
 ```
 
-Дефолти вже налаштовані на цей сценарій: база — `vision_tasks` на `localhost:5432`
-(та сама, що піднімає docker compose), файли — тека `backend/uploads`. Інші значення
-задаються змінними `DATABASE_URL` і `UPLOAD_DIR`.
+The defaults are already set up for this scenario: database `vision_tasks` on `localhost:5432`
+(the same one docker compose starts), files in the `backend/uploads` folder. Other values
+are set via the `DATABASE_URL` and `UPLOAD_DIR` variables.
 
-Залежності живуть у `backend/pyproject.toml`, точні версії — в `uv.lock`. Щоб додати
-пакет: `uv add <пакет>` (або `uv add --dev <пакет>` для інструментів розробки) — uv сам
-оновить лок. Після ручного правлення `pyproject.toml` — `uv lock` (або `make lock`) і
+Dependencies live in `backend/pyproject.toml`, exact versions in `uv.lock`. To add a
+package: `uv add <package>` (or `uv add --dev <package>` for dev tooling) — uv updates
+the lock itself. After hand-editing `pyproject.toml`, run `uv lock` (or `make lock`) and
 `docker compose build backend`.
 
-Фронтенд (потрібен [bun](https://bun.sh/)):
+Frontend (requires [bun](https://bun.sh/)):
 
 ```bash
 cd frontend
-bun install                  # поставить залежності за bun.lock
+bun install                  # installs dependencies from bun.lock
 bun run dev
 ```
 
-Додати пакет: `bun add <пакет>` (`bun add -d <пакет>` для dev-залежності) — лок
-оновиться сам, далі `docker compose build frontend`.
+To add a package: `bun add <package>` (`bun add -d <package>` for a dev dependency) — the lock
+updates itself, then `docker compose build frontend`.
