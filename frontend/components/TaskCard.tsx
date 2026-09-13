@@ -2,6 +2,7 @@
 
 import { useState, type DragEvent } from "react";
 
+import LinkifiedText from "@/components/LinkifiedText";
 import UploadProgress from "@/components/UploadProgress";
 import { splitBySize } from "@/lib/files";
 import { daysLeft, deadlineLabel, formatDateShort } from "@/lib/format";
@@ -219,7 +220,11 @@ export default function TaskCard({
             </button>
           </h3>
 
-          {task.description && <p className="task-desc">{task.description}</p>}
+          {task.description && (
+            <p className="task-desc">
+              <LinkifiedText text={task.description} />
+            </p>
+          )}
 
           <div className="task-foot">
             <div className="task-move">

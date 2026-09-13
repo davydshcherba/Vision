@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import FileDropzone from "@/components/FileDropzone";
 import FilePreview from "@/components/FilePreview";
+import LinkifiedText from "@/components/LinkifiedText";
 import UploadProgress from "@/components/UploadProgress";
 import { attachmentUrl, attachmentViewUrl } from "@/lib/api";
 import { splitBySize } from "@/lib/files";
@@ -164,7 +165,9 @@ export default function TaskDetail({
             <div className="side-block">
               <div className="side-label">Опис</div>
               {task.description ? (
-                <p className="side-text">{task.description}</p>
+                <p className="side-text">
+                  <LinkifiedText text={task.description} />
+                </p>
               ) : (
                 <p className="side-text muted">Опису немає</p>
               )}
