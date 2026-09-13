@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-A student task dashboard: tasks (title, description, due date, status) with file attachments and in-page file preview. FastAPI + async SQLAlchemy + PostgreSQL backend, Next.js 15 (App Router, TypeScript, React 19) frontend, all run with Docker Compose. The README and code comments are in English; UI strings and API error messages are in Ukrainian — keep new ones that way. Comments use [Better Comments](https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments) tags: `! ` for pitfalls and security notes, `* ` for important rationale, `? ` for open questions, `TODO` for pending work; plain comments otherwise. Docstrings and JSDoc stay untagged.
+A student task dashboard: tasks (title, description, due date, status) with file attachments and in-page file preview. FastAPI + async SQLAlchemy + PostgreSQL backend, Next.js 15 (App Router, TypeScript, React 19) frontend, all run with Docker Compose. The README and code comments are in English; UI strings and API error messages are bilingual (Ukrainian default, English) — every new one needs both translations: frontend in `lib/i18n.ts`, backend in `core/i18n.py`. Comments use [Better Comments](https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments) tags: `! ` for pitfalls and security notes, `* ` for important rationale, `? ` for open questions, `TODO` for pending work; plain comments otherwise. Docstrings and JSDoc stay untagged.
 
 ## Commands
 
@@ -46,6 +46,7 @@ One package per layer, one module per domain (`tasks`, `attachments`) inside eac
 A single client-rendered page (`app/page.tsx`) holds all state (tasks, stats, limits, filter, debounced search, open task/file) and refetches tasks + stats after every mutation. Components: `TaskBoard` (three kanban columns, drag & drop or arrow buttons to change status), `TaskDetail` (modal with `FilePreview`), `TaskForm`, `FileDropzone`, `UploadProgress`.
 
 - `lib/api.ts` is the only API client (`NEXT_PUBLIC_API_URL`, default `http://localhost:8000`). Uploads use `XMLHttpRequest` rather than `fetch` to get upload progress. Text previews are fetched with a `Range` header up to `text_preview_limit` and decoded as UTF-8 with a windows-1251 fallback.
+- **i18n**: `LanguageProvider` (in `app/layout.tsx`) holds the language (UA/EN switch in the masthead, saved in `localStorage`); components read strings via `const { lang, t } = useI18n()`, and `lib/format.ts`/`lib/files.ts` helpers take `lang`. `lib/i18n.ts` types the English dictionary as `typeof uk`, so a missing key fails `tsc`. `lib/api.ts` sends `Accept-Language`; the backend middleware in `main.py` puts it into a context var read by `core/i18n.t()`.
 - `lib/types.ts` mirrors the backend Pydantic schemas by hand — update both sides together. `lib/files.ts` checks file sizes client-side before upload using the server limits.
 - Import alias `@/` maps to the `frontend/` root.
 

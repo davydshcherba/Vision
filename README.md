@@ -92,7 +92,8 @@ docker compose exec db psql -U vision -d vision_tasks
 - Counters at the top, including **overdue** deadlines
 - Delete a task together with its files (both from disk and from the DB)
 
-> The UI and API error messages are in Ukrainian.
+- **UA / EN language switch** in the header — the choice is remembered, and API error
+  messages follow it via `Accept-Language`
 
 ---
 
