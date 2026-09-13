@@ -204,7 +204,6 @@ export default function TaskCard({
         <>
           <div className="task-top">
             <span className={`due ${overdue ? "late" : dueSoon ? "soon" : task.due_date ? "" : "none"}`}>
-              <span aria-hidden>{overdue ? "⏰" : "📅"}</span>
               {formatDateShort(task.due_date)}
             </span>
             {task.due_date && task.status !== "done" && (
@@ -246,33 +245,27 @@ export default function TaskCard({
 
             <div className="task-tools">
               <button
-                className="icon-btn"
+                className="link-btn"
                 onClick={() => onOpen(task.id)}
-                title="Файли задачі"
                 aria-label={`Файли задачі (${task.attachments.length})`}
               >
-                📎
-                {task.attachments.length > 0 && (
-                  <span className="icon-count">{task.attachments.length}</span>
-                )}
+                Файли{task.attachments.length > 0 && ` (${task.attachments.length})`}
               </button>
               <button
-                className="icon-btn"
+                className="link-btn"
                 onClick={startEditing}
                 disabled={busy}
-                title="Змінити"
                 aria-label="Змінити задачу"
               >
-                ✏️
+                Змінити
               </button>
               <button
-                className="icon-btn danger"
+                className="link-btn"
                 onClick={handleDelete}
                 disabled={busy}
-                title="Видалити"
                 aria-label="Видалити задачу"
               >
-                🗑
+                Видалити
               </button>
             </div>
           </div>

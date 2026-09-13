@@ -44,9 +44,7 @@ export default function FilePreview({ file, textLimit }: Props) {
   if (!file) {
     return (
       <div className="preview-empty">
-        <span className="preview-empty-icon" aria-hidden>
-          📂
-        </span>
+        <span className="preview-empty-kicker">Попередній перегляд</span>
         <strong>Файлів поки немає</strong>
         Прикріпи PDF, картинку чи конспект — тут його можна буде одразу переглянути.
       </div>
@@ -94,12 +92,10 @@ export default function FilePreview({ file, textLimit }: Props) {
 
   return (
     <div className="preview-empty">
-      <span className="preview-empty-icon" aria-hidden>
-        📦
-      </span>
+      <span className="preview-empty-kicker">{file.filename.includes(".") ? file.filename.split(".").pop() : "Файл"}</span>
       <strong>Цей формат не показується в браузері</strong>
       {file.filename} · {formatSize(file.size)}
-      <a className="btn btn-primary" href={attachmentUrl(file)} download style={{ marginTop: 12 }}>
+      <a className="btn btn-primary" href={attachmentUrl(file)} download style={{ marginTop: 20 }}>
         Завантажити файл
       </a>
     </div>

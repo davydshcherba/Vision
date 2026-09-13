@@ -29,7 +29,7 @@ interface Props {
   onReject: (messages: string[]) => void;
 }
 
-const FILE_ICONS: Record<string, string> = { pdf: "📕", image: "🖼️", text: "📝" };
+const FILE_KINDS: Record<string, string> = { pdf: "PDF", image: "IMG", text: "TXT" };
 
 export default function TaskDetail({
   task,
@@ -146,7 +146,7 @@ export default function TaskDetail({
             <h2 className="modal-title">{task.title}</h2>
             <div className="task-meta" style={{ marginTop: 8 }}>
               <span className={`badge ${task.status}`}>{STATUS_LABELS[task.status]}</span>
-              <span className="badge date">📅 {formatDate(task.due_date)}</span>
+              <span className="badge date">{formatDate(task.due_date)}</span>
               {task.due_date && (
                 <span className={`badge ${overdue ? "overdue" : "date"}`}>
                   {deadlineLabel(task.due_date)}
@@ -207,8 +207,8 @@ export default function TaskDetail({
                         {file.preview === "image" ? (
                           <img className="file-thumb" src={attachmentViewUrl(file)} alt="" />
                         ) : (
-                          <span className="file-thumb-icon" aria-hidden>
-                            {FILE_ICONS[file.preview ?? ""] ?? "📎"}
+                          <span className="file-kind" aria-hidden>
+                            {FILE_KINDS[file.preview ?? ""] ?? "FILE"}
                           </span>
                         )}
                         <span className="file-pick-name">{file.filename}</span>
@@ -227,7 +227,7 @@ export default function TaskDetail({
                 </ul>
               )}
 
-              <div style={{ marginTop: 10 }}>
+              <div style={{ marginTop: 16 }}>
                 <FileDropzone
                   onFiles={handleUpload}
                   disabled={busy}

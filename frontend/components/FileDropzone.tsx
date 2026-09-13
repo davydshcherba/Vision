@@ -53,7 +53,7 @@ export default function FileDropzone({ onFiles, label, hint, disabled, compact }
           if (!disabled) pick(event.dataTransfer.files);
         }}
       >
-        <span className="dropzone-label">📎 {label}</span>
+        <span className="dropzone-label">{label}</span>
         {hint && <span className="dropzone-hint">{hint}</span>}
       </button>
     </>
