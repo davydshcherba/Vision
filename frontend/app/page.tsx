@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import StatCards from "@/components/StatCards";
-import TaskCard from "@/components/TaskCard";
+import TaskBoard from "@/components/TaskBoard";
 import TaskDetail from "@/components/TaskDetail";
 import TaskForm from "@/components/TaskForm";
 import * as api from "@/lib/api";
@@ -22,7 +22,7 @@ import {
 type Filter = TaskStatus | "all";
 
 const TABS: { value: Filter; label: string }[] = [
-  { value: "all", label: "Усі" },
+  { value: "all", label: "Уся дошка" },
   ...STATUS_ORDER.map((value) => ({ value: value as Filter, label: STATUS_LABELS[value] })),
 ];
 
@@ -117,7 +117,7 @@ export default function DashboardPage() {
       <header className="header">
         <div>
           <h1>Мої задачі</h1>
-          <p>Дедлайни, описи та файли до навчальних завдань — в одному місці.</p>
+          <p>Перетягуй картки між колонками — у кожній спершу найближчі дедлайни.</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
           {showForm ? "Закрити форму" : "+ Нова задача"}
@@ -179,21 +179,16 @@ export default function DashboardPage() {
             : "Натисни «Нова задача», щоб додати перше завдання."}
         </div>
       ) : (
-        <div className="task-list">
-          {tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              limits={limits}
-              onUpdate={(id, data) => run(async () => void (await api.updateTask(id, data)))}
-              onDelete={(id) => run(async () => await api.deleteTask(id))}
-              onUploadFiles={uploadFiles}
-              onDeleteFile={(id) => run(async () => await api.deleteAttachment(id))}
-              onOpen={(taskId, fileId) => setOpen({ taskId, fileId: fileId ?? null })}
-              onReject={setNotice}
-            />
-          ))}
-        </div>
+        <TaskBoard
+          tasks={tasks}
+          columns={filter === "all" ? STATUS_ORDER : [filter]}
+          limits={limits}
+          onUpdate={(id, data) => run(async () => void (await api.updateTask(id, data)))}
+          onDelete={(id) => run(async () => await api.deleteTask(id))}
+          onUploadFiles={uploadFiles}
+          onOpen={(taskId, fileId) => setOpen({ taskId, fileId: fileId ?? null })}
+          onReject={setNotice}
+        />
       )}
 
       {openTask && (

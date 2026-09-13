@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type DragEvent } from "react";
 
-import FileDropzone from "@/components/FileDropzone";
 import UploadProgress from "@/components/UploadProgress";
 import { splitBySize } from "@/lib/files";
-import { daysLeft, deadlineLabel, formatDate, formatSize } from "@/lib/format";
+import { daysLeft, deadlineLabel, formatDateShort } from "@/lib/format";
 import {
   STATUS_LABELS,
   STATUS_ORDER,
@@ -15,26 +14,33 @@ import {
   type TaskStatus,
 } from "@/lib/types";
 
-const FILE_ICONS: Record<string, string> = { pdf: "📕", image: "🖼️", text: "📝" };
-
 interface Props {
   task: Task;
   limits: Limits;
+  dragging: boolean;
+  onDragStart: () => void;
+  onDragEnd: () => void;
   onUpdate: (id: number, data: Partial<TaskInput>) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
   onUploadFiles: (id: number, files: File[], onProgress: (percent: number) => void) => Promise<void>;
-  onDeleteFile: (attachmentId: number) => Promise<void>;
   onOpen: (taskId: number, attachmentId?: number) => void;
   onReject: (messages: string[]) => void;
+}
+
+/** Тягнуть файли, а не картку — таке перетягування картка обробляє сама. */
+function hasFiles(event: DragEvent): boolean {
+  return Array.from(event.dataTransfer.types).includes("Files");
 }
 
 export default function TaskCard({
   task,
   limits,
+  dragging,
+  onDragStart,
+  onDragEnd,
   onUpdate,
   onDelete,
   onUploadFiles,
-  onDeleteFile,
   onOpen,
   onReject,
 }: Props) {
@@ -44,10 +50,15 @@ export default function TaskCard({
   const [dueDate, setDueDate] = useState(task.due_date ?? "");
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
+  const [fileOver, setFileOver] = useState(false);
 
   const days = daysLeft(task.due_date);
   const overdue = task.status !== "done" && days !== null && days < 0;
   const dueSoon = task.status !== "done" && days !== null && days >= 0 && days <= 2;
+
+  const index = STATUS_ORDER.indexOf(task.status);
+  const previous = STATUS_ORDER[index - 1];
+  const next = STATUS_ORDER[index + 1];
 
   function startEditing() {
     setTitle(task.title);
@@ -105,18 +116,42 @@ export default function TaskCard({
     }
   }
 
-  async function handleDeleteFile(id: number, name: string) {
-    if (!window.confirm(`Видалити файл «${name}»?`)) return;
-    setBusy(true);
-    try {
-      await onDeleteFile(id);
-    } finally {
-      setBusy(false);
-    }
-  }
+  const classes = ["task", `status-${task.status}`];
+  if (overdue) classes.push("is-overdue");
+  if (dragging) classes.push("dragging");
+  if (fileOver) classes.push("file-over");
 
   return (
-    <article className={`task status-${task.status} ${overdue ? "is-overdue" : ""}`}>
+    <article
+      className={classes.join(" ")}
+      draggable={!editing && !busy}
+      onDragStart={(event) => {
+        // Firefox не почне перетягування, доки в dataTransfer порожньо
+        event.dataTransfer.setData("text/plain", String(task.id));
+        event.dataTransfer.effectAllowed = "move";
+        onDragStart();
+      }}
+      onDragEnd={onDragEnd}
+      onDragEnter={(event) => {
+        if (hasFiles(event)) setFileOver(true);
+      }}
+      onDragOver={(event) => {
+        if (!hasFiles(event)) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "copy";
+      }}
+      onDragLeave={(event) => {
+        if (event.currentTarget.contains(event.relatedTarget as Node)) return;
+        setFileOver(false);
+      }}
+      onDrop={(event) => {
+        if (!hasFiles(event)) return; // картку впіймає колонка
+        event.preventDefault();
+        event.stopPropagation();
+        setFileOver(false);
+        if (!busy) void handleUpload(Array.from(event.dataTransfer.files));
+      }}
+    >
       {editing ? (
         <div className="form-grid">
           <div className="field">
@@ -149,99 +184,102 @@ export default function TaskCard({
             />
           </div>
           <div className="form-actions">
-            <button className="btn btn-primary btn-sm" onClick={saveEdits} disabled={busy || !title.trim()}>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={saveEdits}
+              disabled={busy || !title.trim()}
+            >
               Зберегти
             </button>
-            <button className="btn btn-ghost btn-sm" onClick={() => setEditing(false)} disabled={busy}>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => setEditing(false)}
+              disabled={busy}
+            >
               Скасувати
             </button>
           </div>
         </div>
       ) : (
         <>
-          <div className="task-head">
-            <div>
-              <h3 className="task-title">
-                <button className="task-title-btn" onClick={() => onOpen(task.id)}>
-                  {task.title}
-                </button>
-              </h3>
-              {task.description && <p className="task-desc">{task.description}</p>}
-            </div>
-            <div className="task-actions">
-              <select
-                className="select btn-sm"
-                style={{ width: "auto" }}
-                value={task.status}
-                onChange={(e) => changeStatus(e.target.value as TaskStatus)}
-                disabled={busy}
-                aria-label="Статус задачі"
-              >
-                {STATUS_ORDER.map((value) => (
-                  <option key={value} value={value}>
-                    {STATUS_LABELS[value]}
-                  </option>
-                ))}
-              </select>
-              <button className="btn btn-ghost btn-sm" onClick={() => onOpen(task.id)}>
-                Переглянути
-              </button>
-              <button className="btn btn-ghost btn-sm" onClick={startEditing} disabled={busy}>
-                Змінити
-              </button>
-              <button className="btn btn-danger btn-sm" onClick={handleDelete} disabled={busy}>
-                Видалити
-              </button>
-            </div>
-          </div>
-
-          <div className="task-meta">
-            <span className={`badge ${task.status}`}>{STATUS_LABELS[task.status]}</span>
-            <span className="badge date">📅 {formatDate(task.due_date)}</span>
-            {task.due_date && (
-              <span className={`badge ${overdue ? "overdue" : dueSoon ? "in_progress" : "date"}`}>
+          <div className="task-top">
+            <span className={`due ${overdue ? "late" : dueSoon ? "soon" : task.due_date ? "" : "none"}`}>
+              <span aria-hidden>{overdue ? "⏰" : "📅"}</span>
+              {formatDateShort(task.due_date)}
+            </span>
+            {task.due_date && task.status !== "done" && (
+              <span className={`due-rel ${overdue ? "late" : dueSoon ? "soon" : ""}`}>
                 {deadlineLabel(task.due_date)}
               </span>
             )}
           </div>
+
+          <h3 className="task-title">
+            <button className="task-title-btn" onClick={() => onOpen(task.id)}>
+              {task.title}
+            </button>
+          </h3>
+
+          {task.description && <p className="task-desc">{task.description}</p>}
+
+          <div className="task-foot">
+            <div className="task-move">
+              <button
+                className="icon-btn"
+                onClick={() => changeStatus(previous)}
+                disabled={busy || !previous}
+                title={previous ? `Перенести: ${STATUS_LABELS[previous]}` : undefined}
+                aria-label={previous ? `Перенести в «${STATUS_LABELS[previous]}»` : "Ліва колонка"}
+              >
+                ←
+              </button>
+              <button
+                className="icon-btn"
+                onClick={() => changeStatus(next)}
+                disabled={busy || !next}
+                title={next ? `Перенести: ${STATUS_LABELS[next]}` : undefined}
+                aria-label={next ? `Перенести в «${STATUS_LABELS[next]}»` : "Права колонка"}
+              >
+                →
+              </button>
+            </div>
+
+            <div className="task-tools">
+              <button
+                className="icon-btn"
+                onClick={() => onOpen(task.id)}
+                title="Файли задачі"
+                aria-label={`Файли задачі (${task.attachments.length})`}
+              >
+                📎
+                {task.attachments.length > 0 && (
+                  <span className="icon-count">{task.attachments.length}</span>
+                )}
+              </button>
+              <button
+                className="icon-btn"
+                onClick={startEditing}
+                disabled={busy}
+                title="Змінити"
+                aria-label="Змінити задачу"
+              >
+                ✏️
+              </button>
+              <button
+                className="icon-btn danger"
+                onClick={handleDelete}
+                disabled={busy}
+                title="Видалити"
+                aria-label="Видалити задачу"
+              >
+                🗑
+              </button>
+            </div>
+          </div>
+
+          <UploadProgress percent={progress} />
         </>
       )}
-
-      <div className="files">
-        <div className="files-title">
-          Файли {task.attachments.length > 0 && `(${task.attachments.length})`}
-        </div>
-
-        {task.attachments.length > 0 && (
-          <div className="file-list">
-            {task.attachments.map((file) => (
-              <div className="file" key={file.id}>
-                <span aria-hidden>{FILE_ICONS[file.preview ?? ""] ?? "📎"}</span>
-                <button className="file-open" onClick={() => onOpen(task.id, file.id)}>
-                  {file.filename}
-                </button>
-                <span className="file-size">{formatSize(file.size)}</span>
-                <button
-                  className="file-remove"
-                  onClick={() => handleDeleteFile(file.id, file.filename)}
-                  disabled={busy}
-                  aria-label={`Видалити ${file.filename}`}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <FileDropzone
-          onFiles={handleUpload}
-          disabled={busy}
-          compact
-          label={busy ? "Зачекайте..." : "Додати файл або перетягнути сюди"}
-        />
-        <UploadProgress percent={progress} />
-      </div>
     </article>
   );
 }

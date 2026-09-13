@@ -4,7 +4,7 @@ export default function UploadProgress({ percent }: { percent: number | null }) 
   if (percent === null) return null;
 
   return (
-    <div className="progress">
+    <div className="upload-progress">
       <div
         className="progress-track"
         role="progressbar"

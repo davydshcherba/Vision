@@ -85,7 +85,7 @@ select {
 /* ---------- Layout ---------- */
 
 .page {
-  max-width: 1080px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 40px 20px 80px;
 }
@@ -330,39 +330,178 @@ select {
   min-width: 200px;
 }
 
-/* ---------- Task cards ---------- */
+/* ---------- Дошка ---------- */
 
-.task-list {
+.board {
+  display: grid;
+  grid-template-columns: repeat(var(--columns, 3), minmax(0, 1fr));
+  align-items: start;
+  gap: 14px;
+}
+
+.column {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
+
+/* Один статус — колонка не розтягується на всю ширину екрана */
+.board:has(> .column:only-child) {
+  max-width: 560px;
+}
+
+/* Картку тягнуть сюди */
+.column.over {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.column-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px;
+}
+
+.column-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--todo);
+}
+
+.column-in_progress .column-dot { background: var(--progress); }
+.column-done .column-dot { background: var(--done); }
+
+.column-title {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.column-count {
+  padding: 0 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.column-late {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--danger);
+  white-space: nowrap;
+}
+
+.column-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 64px;
+}
+
+.column-empty {
+  margin: 0;
+  padding: 20px 10px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+/* ---------- Картка задачі ---------- */
 
 .task {
   background: var(--surface);
   border: 1px solid var(--border);
   border-left: 3px solid var(--todo);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
-  padding: 16px 18px;
+  padding: 12px 14px;
+  cursor: grab;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.task:active { cursor: grabbing; }
+
+.task:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 1px 2px rgba(24, 30, 56, 0.06), 0 8px 22px rgba(24, 30, 56, 0.1);
+}
+
+.task.dragging {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+/* На картку тягнуть файли */
+.task.file-over {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.task .input,
+.task .textarea {
+  cursor: auto;
 }
 
 .task.status-in_progress { border-left-color: var(--progress); }
 .task.status-done { border-left-color: var(--done); }
 .task.is-overdue { border-left-color: var(--danger); }
 
-.task-head {
+.task-top {
   display: flex;
-  gap: 14px;
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
 }
+
+.due {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.due.late { background: var(--danger-soft); color: var(--danger); }
+.due.soon { background: var(--progress-soft); color: var(--progress); }
+.due.none { color: var(--text-faint); }
+
+.due-rel {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.due-rel.late { color: var(--danger); font-weight: 550; }
+.due-rel.soon { color: var(--progress); font-weight: 550; }
 
 .task-title {
   margin: 0;
-  font-size: 16.5px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.01em;
+  line-height: 1.4;
   word-break: break-word;
 }
 
@@ -372,11 +511,69 @@ select {
 }
 
 .task-desc {
-  margin: 8px 0 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  margin: 6px 0 0;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 13.5px;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.task-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--border);
+}
+
+.task-move,
+.task-tools {
+  display: flex;
+  gap: 2px;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 27px;
+  height: 27px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.icon-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.icon-btn.danger:hover:not(:disabled) {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.icon-count {
+  font-size: 11.5px;
+  font-weight: 600;
 }
 
 .task-meta {
@@ -536,7 +733,7 @@ select {
   color: var(--danger);
 }
 
-.progress {
+.upload-progress {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -992,9 +1189,11 @@ select {
   color: var(--text-muted);
 }
 
+@media (max-width: 900px) {
+  .board { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 640px) {
   .page { padding: 24px 14px 60px; }
   .row-2 { grid-template-columns: 1fr; }
-  .task-head { flex-direction: column; }
-  .task-actions { width: 100%; }
 }
