@@ -6,10 +6,10 @@ from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.config import settings
-from ..files.storage import delete_file, safe_filename, save_upload
-from ..tasks.models import Task
-from .models import Attachment
-from .schemas import Limits, UploadError, UploadResult
+from ..models.attachment import Attachment
+from ..models.task import Task
+from ..schemas.attachment import Limits, UploadError, UploadResult
+from .storage import delete_file, safe_filename, save_upload
 
 
 def current_limits() -> Limits:

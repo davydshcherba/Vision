@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
-from ..files.preview import PreviewKind, preview_kind
+from ..utils.preview import PreviewKind, preview_kind
 
 
 class AttachmentRead(BaseModel):

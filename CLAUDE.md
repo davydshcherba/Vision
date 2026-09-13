@@ -29,13 +29,13 @@ There is no linter or formatter configured. Frontend type check: `cd frontend &&
 
 ## Backend architecture (`backend/app/`)
 
-One package per domain (`tasks/`, `attachments/`), each split into `router.py` (HTTP only: parse request, shape response), `service.py` (all logic, raises `HTTPException`), `models.py`, `schemas.py`. Shared code lives in `core/` (pydantic-settings `config.py`, async engine and `get_session` dependency in `database.py`) and `files/` (disk storage and inline-preview rules).
+One package per layer, one module per domain (`tasks`, `attachments`) inside each: `routers/` (HTTP only: parse request, shape response), `utils/` (all business logic in `utils/tasks.py` and `utils/attachments.py`, raises `HTTPException`; plus `storage.py` for disk and `preview.py` for inline-preview rules), `models/` (SQLAlchemy, `task.py`/`attachment.py`), `schemas/` (Pydantic, `task.py`/`attachment.py`), and `core/` (pydantic-settings `config.py`, async engine and `get_session` dependency in `database.py`). Routers import logic modules as `from ..utils import tasks as service`.
 
-- **Import direction is one-way**: `attachments` imports from `tasks`; the `Task.attachments` relationship (`lazy="selectin"`, `cascade="all, delete-orphan"`) is declared only in `tasks/models.py`. Don't import `tasks` from `attachments/models.py` or you'll create a cycle.
-- New models must be imported in `migrations/env.py` so autogenerate sees them.
+- **Import direction is one-way**: attachment code imports from task code; the `Task.attachments` relationship (`lazy="selectin"`, `cascade="all, delete-orphan"`) is declared only in `models/task.py`. Don't import `models/task.py` from `models/attachment.py` or you'll create a cycle.
+- New models must be re-exported from `models/__init__.py`; `migrations/env.py` imports `app.models` so autogenerate sees them.
 - **Files on disk vs DB**: files are stored under `settings.upload_path` with a uuid `stored_name`; `filename` in the DB is only the display name (renaming never touches disk). Any code path that deletes or fails to commit rows must also clean up files on disk — see `save_uploads` (rollback removes already-written files) and `delete_task` (collects `stored_name`s before deleting). Tests assert no orphaned files remain.
 - **Batch uploads are partial**: `POST /api/tasks/{id}/attachments` returns `{uploaded, failed}`; one bad file (size, per-task count/storage limit, empty) goes to `failed` without blocking others; 400 only if nothing was saved. Limits come from env (`MAX_UPLOAD_SIZE`, `MAX_FILES_PER_TASK`, `MAX_TASK_STORAGE`, `TEXT_PREVIEW_LIMIT`) and are exposed via `GET /api/limits` for the frontend.
-- **Preview security** (`files/preview.py` is the single source of truth for both the `preview` schema field and the `/view` route): only PDFs and raster images are served inline with their real type; all text (including `.html`) is served as `text/plain`; SVG and everything else is download-only. Never serve the client-supplied content type inline.
+- **Preview security** (`utils/preview.py` is the single source of truth for both the `preview` schema field and the `/view` route): only PDFs and raster images are served inline with their real type; all text (including `.html`) is served as `text/plain`; SVG and everything else is download-only. Never serve the client-supplied content type inline.
 
 ## Tests (`backend/tests/`)
 

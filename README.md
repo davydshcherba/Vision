@@ -151,22 +151,23 @@ If **no** file was saved, `400` is returned with the list of reasons.
 │   ├── alembic.ini
 │   ├── migrations/            # schema versions
 │   ├── tests/                 # API tests
-│   └── app/                   # one module per domain
+│   └── app/                   # one package per layer
 │       ├── main.py            # FastAPI, CORS, router registration
 │       ├── core/
 │       │   ├── config.py      # settings and limits from environment variables
 │       │   └── database.py    # Base, async engine + sessions
-│       ├── tasks/
-│       │   ├── router.py      # HTTP: /api/tasks, /api/stats
-│       │   ├── service.py     # querying, updating, counters, deletion
-│       │   ├── models.py      # Task, TaskStatus
-│       │   └── schemas.py
-│       ├── attachments/
-│       │   ├── router.py      # HTTP: /api/attachments, uploads, /api/limits
-│       │   ├── service.py     # limits, file batches, cleanup
-│       │   ├── models.py      # Attachment
-│       │   └── schemas.py
-│       └── files/             # disk handling shared between modules
+│       ├── routers/           # HTTP only
+│       │   ├── tasks.py       # /api/tasks, /api/stats
+│       │   └── attachments.py # /api/attachments, uploads, /api/limits
+│       ├── schemas/           # Pydantic request/response models
+│       │   ├── task.py
+│       │   └── attachment.py
+│       ├── models/            # SQLAlchemy tables
+│       │   ├── task.py        # Task, TaskStatus
+│       │   └── attachment.py  # Attachment
+│       └── utils/             # business logic and file handling
+│           ├── tasks.py       # querying, updating, counters, deletion
+│           ├── attachments.py # limits, file batches, cleanup
 │           ├── storage.py     # saving files to disk
 │           └── preview.py     # which files can be shown inline and how
 └── frontend/
@@ -198,14 +199,14 @@ If **no** file was saved, `400` is returned with the list of reasons.
 
 ## Backend architecture
 
-Each domain is a self-contained package: `router.py` handles HTTP only (parsing the
-request and shaping the response), all logic lives in `service.py`, and `models.py` and
-`schemas.py` describe the domain for the database and for the API. Shared code lives in
-`core/` (settings, sessions) and `files/` (disk and inline preview rules).
+The app is split by layer: `routers/` handles HTTP only (parsing the request and
+shaping the response), all logic lives in `utils/` (`tasks.py`, `attachments.py`,
+plus disk storage and inline preview rules), `models/` describes the database tables
+and `schemas/` the API payloads. `core/` holds settings and database sessions.
 
-Dependencies between modules are one-way: `attachments` knows about `tasks` (a file
-always belongs to a task); in the other direction there is only the SQLAlchemy
-relationship declared in `tasks/models.py`. So imports never form a cycle.
+Model dependencies are one-way: `models/task.py` imports `Attachment` and declares the
+SQLAlchemy relationship, while `models/attachment.py` knows nothing about tasks. So
+imports never form a cycle.
 
 ## Data and files
 

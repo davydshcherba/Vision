@@ -4,7 +4,7 @@ from enum import Enum
 from sqlalchemy import Date, DateTime, Enum as SAEnum, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from ..attachments.models import Attachment
+from .attachment import Attachment
 from ..core.database import Base
 
 
@@ -33,7 +33,7 @@ class Task(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    # ! The relationship is declared only here: attachments knows nothing about tasks,
+    # ! The relationship is declared only here: attachment.py knows nothing about tasks,
     # ! so the modules never import each other in a cycle.
     attachments: Mapped[list[Attachment]] = relationship(
         cascade="all, delete-orphan",

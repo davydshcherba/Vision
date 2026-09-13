@@ -7,9 +7,9 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.config import settings
-from ..files.storage import delete_file
-from .models import Task, TaskStatus
-from .schemas import Stats, TaskCreate, TaskUpdate
+from ..models.task import Task, TaskStatus
+from ..schemas.task import Stats, TaskCreate, TaskUpdate
+from .storage import delete_file
 
 
 async def list_tasks(

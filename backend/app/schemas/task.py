@@ -2,8 +2,8 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..attachments.schemas import AttachmentRead
-from .models import TaskStatus
+from ..models.task import TaskStatus
+from .attachment import AttachmentRead
 
 
 class TaskBase(BaseModel):

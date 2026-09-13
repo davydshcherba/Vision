@@ -3,11 +3,11 @@ from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.database import get_session
-from ..files.preview import inline_media_type
-from ..tasks import service as tasks_service
-from . import service
-from .models import Attachment
-from .schemas import AttachmentRead, AttachmentUpdate, Limits, UploadResult
+from ..models.attachment import Attachment
+from ..schemas.attachment import AttachmentRead, AttachmentUpdate, Limits, UploadResult
+from ..utils import attachments as service
+from ..utils import tasks as tasks_service
+from ..utils.preview import inline_media_type
 
 router = APIRouter(prefix="/api", tags=["attachments"])
 
