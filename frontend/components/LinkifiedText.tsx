@@ -1,12 +1,12 @@
 import { Fragment, type ReactNode } from "react";
 
-// http(s)://… або www.… до першого пробілу
+// http(s)://… or www.… up to the first whitespace
 const URL_PATTERN = /(?:https?:\/\/|www\.)[^\s<>"]+/gi;
-// Розділові знаки в кінці речення — не частина адреси
+// * Punctuation at the end of a sentence is not part of the address
 const TRAILING = /[.,;:!?'"»”…]+$/;
 const MAX_LABEL = 48;
 
-/** Відрізає хвостову пунктуацію і непарну закривну дужку: «(див. https://a.b/c)». */
+/** Strips trailing punctuation and an unmatched closing paren: "(see https://a.b/c)". */
 function trimUrl(raw: string): string {
   let url = raw.replace(TRAILING, "");
   while (url.endsWith(")") && (url.match(/\(/g)?.length ?? 0) < (url.match(/\)/g)?.length ?? 0)) {
@@ -15,7 +15,7 @@ function trimUrl(raw: string): string {
   return url;
 }
 
-/** Без протоколу й www, довгі адреси обрізаються посередині. */
+/** Without protocol and www; long addresses are truncated in the middle. */
 function shortLabel(url: string): string {
   const label = url.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/$/, "");
   if (label.length <= MAX_LABEL) return label;

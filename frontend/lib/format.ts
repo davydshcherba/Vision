@@ -10,7 +10,7 @@ export function formatDate(iso: string | null): string {
   return `${day} ${MONTHS[month - 1]} ${year}`;
 }
 
-/** Те саме для картки: рік показуємо, лише якщо він не поточний. */
+/** The same for a card: the year is shown only if it isn't the current one. */
 export function formatDateShort(iso: string | null): string {
   if (!iso) return "Без дедлайну";
   const [year, month, day] = iso.split("-").map(Number);
@@ -19,7 +19,7 @@ export function formatDateShort(iso: string | null): string {
   return year === new Date().getFullYear() ? label : `${label} ${year}`;
 }
 
-/** Скільки днів лишилось до дедлайну (0 — сьогодні, від'ємне — прострочено). */
+/** Days left until the deadline (0 means today, negative means overdue). */
 export function daysLeft(iso: string | null): number | null {
   if (!iso) return null;
   const today = new Date();

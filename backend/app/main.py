@@ -11,8 +11,8 @@ from .tasks.router import router as tasks_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Схему накатує alembic (див. command у docker-compose.yml),
-    # тут лише готуємо теку для файлів.
+    # * The schema is applied by alembic (see command in docker-compose.yml),
+    # * here we only prepare the upload folder.
     settings.upload_path.mkdir(parents=True, exist_ok=True)
     yield
     await engine.dispose()

@@ -28,7 +28,7 @@ interface Props {
   onReject: (messages: string[]) => void;
 }
 
-/** Тягнуть файли, а не картку — таке перетягування картка обробляє сама. */
+/** Files are dragged, not the card — the card handles such a drag itself. */
 function hasFiles(event: DragEvent): boolean {
   return Array.from(event.dataTransfer.types).includes("Files");
 }
@@ -127,7 +127,7 @@ export default function TaskCard({
       className={classes.join(" ")}
       draggable={!editing && !busy}
       onDragStart={(event) => {
-        // Firefox не почне перетягування, доки в dataTransfer порожньо
+        // ! Firefox won't start dragging while dataTransfer is empty
         event.dataTransfer.setData("text/plain", String(task.id));
         event.dataTransfer.effectAllowed = "move";
         onDragStart();
@@ -146,7 +146,7 @@ export default function TaskCard({
         setFileOver(false);
       }}
       onDrop={(event) => {
-        if (!hasFiles(event)) return; // картку впіймає колонка
+        if (!hasFiles(event)) return; // * the column will catch the card
         event.preventDefault();
         event.stopPropagation();
         setFileOver(false);

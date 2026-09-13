@@ -21,7 +21,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
         message = typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail);
       }
     } catch {
-      // тіло не JSON — залишаємо загальне повідомлення
+      // * body is not JSON — keep the generic message
     }
     throw new Error(message);
   }
@@ -35,7 +35,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 const jsonHeaders = { "Content-Type": "application/json" };
 
-/* ---------- Задачі ---------- */
+/* ---------- Tasks ---------- */
 
 export function listTasks(filters: { status?: TaskStatus | "all"; q?: string } = {}) {
   const params = new URLSearchParams();
@@ -73,11 +73,11 @@ export function deleteTask(id: number) {
   return request<void>(`/api/tasks/${id}`, { method: "DELETE" });
 }
 
-/* ---------- Файли ---------- */
+/* ---------- Files ---------- */
 
 /**
- * Завантаження через XMLHttpRequest, а не fetch: лише так можна показати
- * прогрес — fetch не віддає подій про відправлене тіло запиту.
+ * Upload via XMLHttpRequest rather than fetch: it's the only way to show
+ * progress — fetch emits no events for the sent request body.
  */
 export function uploadAttachments(
   taskId: number,
@@ -102,7 +102,7 @@ export function uploadAttachments(
       try {
         body = JSON.parse(xhr.responseText);
       } catch {
-        // не JSON — нижче віддамо загальну помилку
+        // * not JSON — the generic error is returned below
       }
 
       if (xhr.status >= 200 && xhr.status < 300) {
@@ -137,7 +137,7 @@ export function attachmentUrl(attachment: Attachment) {
   return `${API_URL}${attachment.download_url}`;
 }
 
-/** Той самий файл, але віддається inline — для перегляду в сторінці. */
+/** The same file, but served inline — for viewing in the page. */
 export function attachmentViewUrl(attachment: Attachment) {
   return `${API_URL}${attachment.view_url}`;
 }
@@ -148,8 +148,8 @@ export interface TextContent {
 }
 
 /**
- * Читає текстовий файл для перегляду. Великі файли беремо частково
- * (Range-запитом), інакше 20 МБ логу підвісять вкладку.
+ * Reads a text file for preview. Large files are fetched partially
+ * (with a Range request), otherwise a 20 MB log would freeze the tab.
  */
 export async function fetchAttachmentText(
   attachment: Attachment,
@@ -171,16 +171,16 @@ export async function fetchAttachmentText(
 function decodeText(buffer: ArrayBuffer, truncated: boolean): string {
   const bytes = new Uint8Array(buffer);
 
-  // Якщо обрізали посеред багатобайтового символу — відкидаємо хвіст
+  // ! If cut in the middle of a multibyte character — drop the tail
   for (const cut of truncated ? [0, 1, 2, 3] : [0]) {
     try {
       const slice = cut === 0 ? bytes : bytes.subarray(0, bytes.length - cut);
       return new TextDecoder("utf-8", { fatal: true }).decode(slice);
     } catch {
-      // не склалось — пробуємо коротший хвіст
+      // * didn't work — try a shorter tail
     }
   }
 
-  // Не UTF-8: найімовірніше кирилиця у windows-1251
+  // * Not UTF-8: most likely Cyrillic in windows-1251
   return new TextDecoder("windows-1251").decode(bytes);
 }

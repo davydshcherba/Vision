@@ -1,7 +1,7 @@
 name: vision-tasks
 
 services:
-  # --- Тестова база даних Postgres ---
+  # --- Postgres database ---
   db:
     image: postgres:16-alpine
     container_name: vision-db
@@ -61,7 +61,7 @@ services:
     depends_on:
       - backend
 
-  # --- Веб-клієнт для перегляду бази (необов'язково) ---
+  # --- Web client for browsing the database (optional) ---
   adminer:
     image: adminer:latest
     container_name: vision-adminer

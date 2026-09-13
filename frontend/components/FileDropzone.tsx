@@ -13,12 +13,12 @@ interface Props {
 export default function FileDropzone({ onFiles, label, hint, disabled, compact }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
-  // Лічильник, щоб підсвітка не блимала при переході над дочірніми елементами
+  // * A counter, so the highlight doesn't flicker when moving over child elements
   const depth = useRef(0);
 
   function pick(list: FileList | null) {
     if (!list || list.length === 0) return;
-    // Копіюємо ДО скидання value: FileList — живий обʼєкт інпута
+    // ! Copy BEFORE resetting value: FileList is a live object of the input
     const files = Array.from(list);
     if (inputRef.current) inputRef.current.value = "";
     onFiles(files);

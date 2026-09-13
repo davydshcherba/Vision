@@ -13,9 +13,9 @@ class Attachment(Base):
     task_id: Mapped[int] = mapped_column(
         ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    # Оригінальна назва файлу (те, що бачить користувач)
+    # Original file name (what the user sees)
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
-    # Назва на диску (uuid), щоб файли не перетирали один одного
+    # * Name on disk (uuid), so files never overwrite each other
     stored_name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     content_type: Mapped[str | None] = mapped_column(String(160), nullable=True)
     size: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)

@@ -6,8 +6,8 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
-# Обидва імпорти реєструють таблиці в Base.metadata — без них autogenerate
-# не побачив би моделей.
+# ! Both imports register tables in Base.metadata — without them autogenerate
+# ! would not see the models.
 from app.attachments import models as attachments_models  # noqa: F401
 from app.core.config import settings
 from app.core.database import Base

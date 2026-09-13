@@ -10,7 +10,7 @@ export interface Attachment {
   created_at: string;
   download_url: string;
   view_url: string;
-  /** null — показати не можемо, лише завантажити */
+  /** null means it can't be shown, download only */
   preview: PreviewKind | null;
 }
 
@@ -42,7 +42,7 @@ export interface Limits {
   text_preview_limit: number;
 }
 
-/** Поки ліміти не приїхали з сервера — орієнтуємось на ці. */
+/** Used until the limits arrive from the server. */
 export const DEFAULT_LIMITS: Limits = {
   max_upload_size: 20 * 1024 * 1024,
   max_files_per_task: 20,

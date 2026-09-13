@@ -7,7 +7,7 @@ CHUNK_SIZE = 1024 * 1024
 
 
 async def save_upload(file: UploadFile, upload_dir: Path, max_size: int) -> tuple[str, int]:
-    """Зберігає файл на диск під унікальним ім'ям. Повертає (ім'я на диску, розмір)."""
+    """Saves a file to disk under a unique name. Returns (name on disk, size)."""
     upload_dir.mkdir(parents=True, exist_ok=True)
 
     suffix = Path(file.filename or "").suffix[:20]

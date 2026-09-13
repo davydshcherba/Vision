@@ -18,7 +18,7 @@ const EMPTY_HINTS: Record<TaskStatus, string> = {
   done: "Ще нічого не завершено",
 };
 
-/** Спершу найближчий дедлайн; без дати — в кінці, серед рівних новіші вище. */
+/** Nearest deadline first; undated at the end; among equals, newer on top. */
 function byDeadline(a: Task, b: Task): number {
   if (a.due_date !== b.due_date) {
     if (!a.due_date) return 1;
@@ -48,7 +48,7 @@ export default function TaskBoard({ tasks, columns, ...card }: Props) {
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [overColumn, setOverColumn] = useState<TaskStatus | null>(null);
 
-  /** Реагуємо лише на перетягування картки — файли летять далі, до картки. */
+  /** React only to card drags — files fall through to the card. */
   function allowDrop(status: TaskStatus, event: DragEvent) {
     if (draggedId === null) return;
     event.preventDefault();
@@ -80,7 +80,7 @@ export default function TaskBoard({ tasks, columns, ...card }: Props) {
             className={`column column-${status}${overColumn === status ? " over" : ""}`}
             onDragOver={(event) => allowDrop(status, event)}
             onDragLeave={(event) => {
-              // Перехід на дочірній елемент — ще не вихід із колонки
+              // * Moving onto a child element is not leaving the column yet
               if (event.currentTarget.contains(event.relatedTarget as Node)) return;
               setOverColumn((current) => (current === status ? null : current));
             }}

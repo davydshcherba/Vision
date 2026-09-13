@@ -56,7 +56,7 @@ export default function TaskDetail({
   const overdue = task.status !== "done" && days !== null && days < 0;
   const selected = task.attachments.find((a) => a.id === selectedId) ?? null;
 
-  // Esc закриває, фон під модалкою не скролиться
+  // * Esc closes; the background under the modal doesn't scroll
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -71,7 +71,7 @@ export default function TaskDetail({
     };
   }, [onClose]);
 
-  // Після завантаження одразу показуємо новий файл; видалений — замінюємо першим
+  // * After upload show the new file right away; replace a deleted one with the first
   useEffect(() => {
     const ids = task.attachments.map((a) => a.id);
     const added = ids.filter((id) => !knownIds.current.includes(id));

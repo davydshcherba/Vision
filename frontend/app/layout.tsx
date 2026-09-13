@@ -3,7 +3,7 @@ import { Playfair_Display } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
 
-// Контрастна антиква для заголовків — з кирилицею, на відміну від Bodoni
+// * High-contrast serif for headings — supports Cyrillic, unlike Bodoni
 const display = Playfair_Display({
   subsets: ["latin", "cyrillic"],
   weight: ["400", "500"],

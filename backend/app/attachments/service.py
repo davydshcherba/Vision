@@ -1,4 +1,4 @@
-"""Логіка файлів: ліміти, завантаження пачкою, перейменування, видалення."""
+"""File logic: limits, batch uploads, renaming, deletion."""
 
 from pathlib import Path
 
@@ -29,7 +29,7 @@ async def get_attachment(session: AsyncSession, attachment_id: int) -> Attachmen
 
 
 def file_path(attachment: Attachment) -> Path:
-    """Шлях до файлу на диску; 404, якщо запис у базі є, а файлу вже немає."""
+    """Path to the file on disk; 404 if the DB row exists but the file is gone."""
     path = settings.upload_path / attachment.stored_name
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Файл відсутній на диску")
@@ -39,12 +39,12 @@ def file_path(attachment: Attachment) -> Path:
 async def save_uploads(
     session: AsyncSession, task: Task, files: list[UploadFile]
 ) -> UploadResult:
-    """Зберігає пачку файлів.
+    """Saves a batch of files.
 
-    Один проблемний файл не валить решту: він потрапляє у `failed` з причиною,
-    а решта зберігається. Якщо не вдалося жодного — кидаємо 400 зі списком
-    причин. Будь-яка помилка після запису на диск прибирає за собою файли,
-    інакше вони залишились би висіти без запису в базі.
+    One bad file doesn't break the rest: it goes to `failed` with a reason,
+    and the others are saved. If none succeeded, raise 400 with the list of
+    reasons. Any error after writing to disk cleans up the written files,
+    otherwise they would be left dangling without a DB row.
     """
     used_slots = len(task.attachments)
     used_bytes = sum(attachment.size for attachment in task.attachments)
@@ -121,7 +121,7 @@ async def save_uploads(
 async def rename_attachment(
     session: AsyncSession, attachment: Attachment, filename: str
 ) -> Attachment:
-    """Перейменовує файл. На диску нічого не рухаємо — там ім'я службове."""
+    """Renames a file. Nothing moves on disk — the name there is internal."""
     name = safe_filename(filename)
     if not name:
         raise HTTPException(status_code=422, detail="Порожня назва файлу")

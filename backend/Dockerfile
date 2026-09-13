@@ -1,7 +1,7 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-# Віртуальне оточення тримаємо поза /app: у docker-compose тека проєкту
-# перекривається бінд-маунтом, і .venv усередині неї став би недоступним.
+# ! Keep the virtualenv outside /app: docker-compose bind-mounts over the project
+# ! folder, so a .venv inside it would become unreachable.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
@@ -11,7 +11,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Спершу лише маніфести — шар із залежностями кешується між збірками.
+# * Manifests first — the dependency layer is cached between builds.
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen
 

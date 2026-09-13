@@ -1,6 +1,6 @@
 /*
- * Редакційна естетика модних домів: білий простір, волосяні лінії,
- * жодних заокруглень і тіней, дрібні підписи капітеллю з розрядкою.
+ * * Editorial fashion-house aesthetic: white space, hairline rules,
+ * * no rounded corners or shadows, small letter-spaced small-caps labels.
  */
 :root {
   --bg: #ffffff;
@@ -59,7 +59,7 @@ select {
   outline-offset: 3px;
 }
 
-/* Спільна «капітель» для підписів, кнопок і міток */
+/* Shared small caps for captions, buttons and labels */
 .btn,
 .tab,
 .stat-label,
@@ -189,7 +189,7 @@ select {
   font-size: 10px;
 }
 
-/* Текстове посилання з тонким підкресленням, як «Shop now» */
+/* Text link with a thin underline, like "Shop now" */
 .link-btn {
   display: inline-flex;
   align-items: center;
@@ -275,7 +275,7 @@ select {
   color: var(--text-muted);
 }
 
-/* Поля — лише нижня лінія */
+/* Inputs — bottom border only */
 .input,
 .textarea,
 .select {
@@ -407,7 +407,7 @@ select {
   font-size: 13px;
 }
 
-/* ---------- Дошка ---------- */
+/* ---------- Board ---------- */
 
 .board {
   display: grid;
@@ -424,12 +424,12 @@ select {
   transition: background 0.2s var(--ease);
 }
 
-/* Один статус — колонка не розтягується на всю ширину екрана */
+/* * A single status — the column doesn't stretch to the full screen width */
 .board:has(> .column:only-child) {
   max-width: 560px;
 }
 
-/* Картку тягнуть сюди */
+/* A card is being dragged here */
 .column.over {
   background: var(--surface-2);
 }
@@ -443,7 +443,7 @@ select {
   border-bottom: 1px solid var(--line);
 }
 
-/* Маркер статусу не потрібен — назва колонки говорить сама */
+/* No status marker needed — the column title says it all */
 .column-dot {
   display: none;
 }
@@ -481,7 +481,7 @@ select {
   color: var(--text-faint);
 }
 
-/* ---------- Картка задачі ---------- */
+/* ---------- Task card ---------- */
 
 .task {
   position: relative;
@@ -498,7 +498,7 @@ select {
   opacity: 0.3;
 }
 
-/* На картку тягнуть файли */
+/* Files are being dragged onto the card */
 .task.file-over {
   background: var(--surface-2);
   outline: 1px solid var(--ink);
@@ -585,7 +585,7 @@ select {
   gap: 18px;
 }
 
-/* Дії картки проявляються при наведенні — картка лишається чистою */
+/* * Card actions appear on hover — the card stays clean */
 @media (hover: hover) {
   .task-foot {
     opacity: 0;
@@ -769,7 +769,7 @@ select {
   font-size: 12px;
 }
 
-/* ---------- Посилання в тексті ---------- */
+/* ---------- Links in text ---------- */
 
 .text-link {
   color: var(--ink);
@@ -783,7 +783,7 @@ select {
   transition: text-decoration-color 0.2s var(--ease), background 0.2s var(--ease);
 }
 
-/* Стрілка «назовні» — відкривається в новій вкладці */
+/* "External" arrow — opens in a new tab */
 .text-link::after {
   content: "\2197";
   display: inline-block;
@@ -806,7 +806,7 @@ select {
   color: var(--text-muted);
 }
 
-/* ---------- Перегляд задачі ---------- */
+/* ---------- Task view ---------- */
 
 .task-title-btn,
 .file-open {
@@ -1156,7 +1156,7 @@ select {
   .modal-main { min-height: 60vh; }
 }
 
-/* ---------- Попередження та дрібниці файлів ---------- */
+/* ---------- Warnings and file details ---------- */
 
 .notice {
   display: flex;

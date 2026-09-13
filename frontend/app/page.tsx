@@ -39,13 +39,13 @@ export default function DashboardPage() {
   const [notice, setNotice] = useState<string[]>([]);
   const [open, setOpen] = useState<{ taskId: number; fileId: number | null } | null>(null);
 
-  // Не смикаємо API на кожну натиснуту клавішу
+  // * Don't hit the API on every keystroke
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Ліміти статичні — досить один раз; не приїхали, лишаємось на дефолтних
+  // * Limits are static — once is enough; if they fail to load, keep the defaults
   useEffect(() => {
     api.getLimits().then(setLimits).catch(() => undefined);
   }, []);
@@ -83,7 +83,7 @@ export default function DashboardPage() {
     }
   }
 
-  /** Частина пачки могла не зберегтись — показуємо, що саме і чому. */
+  /** Part of the batch may have failed — show exactly what and why. */
   function reportFailures(result: UploadResult) {
     setNotice(result.failed.map((f) => `${f.filename}: ${f.error}`));
   }

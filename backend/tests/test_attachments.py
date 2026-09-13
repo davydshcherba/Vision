@@ -61,7 +61,7 @@ async def test_oversized_file_does_not_block_the_rest(client, task, monkeypatch,
     assert body["failed"][0]["filename"] == "великий.bin"
     assert "завеликий" in body["failed"][0]["error"]
 
-    # на диску рівно один файл — той, що зберігся
+    # * exactly one file on disk — the one that was saved
     assert len(list(uploads.iterdir())) == 1
 
 

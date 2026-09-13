@@ -1,7 +1,7 @@
-"""Спільні фікстури.
+"""Shared fixtures.
 
-Тести ганяються на окремій базі `vision_tasks_test` поруч з робочою, а файли
-пишуться у тимчасову теку pytest — робочі дані не чіпаються.
+Tests run against a separate `vision_tasks_test` database next to the working one,
+and files are written to a pytest temp folder — working data is never touched.
 """
 
 import asyncio
@@ -34,7 +34,7 @@ async def _recreate_database() -> None:
 
 @pytest.fixture(scope="session")
 def database_url() -> str:
-    """Чиста тестова база — створюється один раз на запуск pytest."""
+    """A clean test database — created once per pytest run."""
     asyncio.run(_recreate_database())
     return _url_for(TEST_DB)
 
@@ -52,7 +52,7 @@ async def engine(database_url) -> AsyncGenerator[AsyncEngine, None]:
 
 @pytest_asyncio.fixture
 async def uploads(tmp_path, monkeypatch):
-    """Тека для файлів на час одного тесту."""
+    """Upload folder for the duration of a single test."""
     upload_dir = tmp_path / "uploads"
     upload_dir.mkdir()
     monkeypatch.setattr(settings, "upload_dir", str(upload_dir))
@@ -92,5 +92,5 @@ PNG_BYTES = (
 
 
 def upload_file(name: str, data: bytes, content_type: str):
-    """Один елемент для multipart-запиту."""
+    """A single item for a multipart request."""
     return ("files", (name, data, content_type))

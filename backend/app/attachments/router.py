@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api", tags=["attachments"])
 
 @router.get("/limits", response_model=Limits, tags=["service"])
 async def get_limits() -> Limits:
-    """Ліміти сервера, щоб фронтенд не відправляв завідомо завеликі файли."""
+    """Server limits, so the frontend doesn't send files that are known to be too large."""
     return service.current_limits()
 
 
@@ -49,11 +49,11 @@ async def download_attachment(
 async def view_attachment(
     attachment_id: int, session: AsyncSession = Depends(get_session)
 ) -> FileResponse:
-    """Віддає файл для перегляду в браузері (Content-Disposition: inline).
+    """Serves a file for viewing in the browser (Content-Disposition: inline).
 
-    PDF відкривається у вбудованому переглядачі й гортається, картинки
-    показуються як є. Для решти типів інлайн не дозволяємо — такий файл
-    віддається як завантаження.
+    PDFs open in the built-in viewer and can be scrolled, images are shown
+    as is. Inline is not allowed for any other type — such a file is
+    served as a download.
     """
     attachment = await service.get_attachment(session, attachment_id)
     path = service.file_path(attachment)

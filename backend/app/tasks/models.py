@@ -33,8 +33,8 @@ class Task(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    # Зв'язок оголошено лише тут: attachments нічого не знає про задачі,
-    # тому модулі не імпортують один одного по колу.
+    # ! The relationship is declared only here: attachments knows nothing about tasks,
+    # ! so the modules never import each other in a cycle.
     attachments: Mapped[list[Attachment]] = relationship(
         cascade="all, delete-orphan",
         lazy="selectin",

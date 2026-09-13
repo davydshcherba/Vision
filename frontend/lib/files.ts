@@ -7,8 +7,8 @@ export interface SplitResult {
 }
 
 /**
- * Відсіює завеликі файли ще до відправки — інакше 20 МБ спершу
- * проїдуть по мережі й аж потім отримають 413.
+ * Filters out oversized files before sending — otherwise 20 MB would first
+ * travel over the network and only then get a 413.
  */
 export function splitBySize(files: File[], limits: Limits): SplitResult {
   const accepted: File[] = [];

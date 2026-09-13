@@ -4,24 +4,24 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Налаштування застосунку. Читаються зі змінних середовища."""
+    """Application settings. Read from environment variables."""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    # Дефолти розраховані на запуск без Docker: база з docker-compose, яка
-    # проброшена на localhost, і тека поруч із кодом. У контейнері обидва
-    # значення перекриває docker-compose (DATABASE_URL, UPLOAD_DIR).
+    # * Defaults target running without Docker: the docker-compose database
+    # * exposed on localhost and a folder next to the code. In the container
+    # * docker-compose overrides both values (DATABASE_URL, UPLOAD_DIR).
     database_url: str = "postgresql+asyncpg://vision:vision@localhost:5432/vision_tasks"
     upload_dir: str = "uploads"
     cors_origins: str = "http://localhost:3000"
 
-    # 20 МБ на один файл
+    # 20 MB per file
     max_upload_size: int = 20 * 1024 * 1024
-    # скільки файлів можна прикріпити до однієї задачі
+    # how many files can be attached to a single task
     max_files_per_task: int = 20
-    # сумарний обсяг файлів однієї задачі
+    # total size of a single task's files
     max_task_storage: int = 100 * 1024 * 1024
-    # скільки байтів тексту фронтенд читає для попереднього перегляду
+    # how many bytes of text the frontend reads for a preview
     text_preview_limit: int = 200 * 1024
 
     @property

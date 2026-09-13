@@ -1,4 +1,4 @@
-"""Початкова схема: tasks + attachments
+"""Initial schema: tasks + attachments
 
 Revision ID: 56a094539b4c
 Revises: 
@@ -47,5 +47,5 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_attachments_task_id'), table_name='attachments')
     op.drop_table('attachments')
     op.drop_table('tasks')
-    # drop_table не прибирає enum-тип у Postgres — інакше повторний upgrade впаде
+    # ! drop_table doesn't remove the enum type in Postgres — otherwise a repeated upgrade fails
     sa.Enum(name='task_status').drop(op.get_bind(), checkfirst=True)

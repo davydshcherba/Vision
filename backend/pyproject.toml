@@ -22,7 +22,7 @@ dev = [
 ]
 
 [tool.uv]
-# Застосунок, а не бібліотека: встановлюємо лише залежності.
+# * An application, not a library: install dependencies only.
 package = false
 
 [tool.pytest.ini_options]

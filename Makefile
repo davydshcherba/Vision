@@ -1,37 +1,37 @@
 .PHONY: up down restart logs test migrate migration lock reset ps shell-db shell-api
 
-up:            ## Підняти весь проєкт
+up:            ## Start the whole project
 	docker compose up --build
 
-down:          ## Зупинити
+down:          ## Stop
 	docker compose down
 
-restart:       ## Перезапустити
+restart:       ## Restart
 	docker compose restart
 
-logs:          ## Логи всіх сервісів
+logs:          ## Logs of all services
 	docker compose logs -f
 
-test:          ## Прогнати тести бекенду
+test:          ## Run backend tests
 	docker compose exec backend pytest
 
-migrate:       ## Накатити міграції вручну
+migrate:       ## Apply migrations manually
 	docker compose exec backend alembic upgrade head
 
-migration:     ## Створити міграцію: make migration m="опис змін"
+migration:     ## Create a migration: make migration m="description"
 	docker compose exec backend alembic revision --autogenerate -m "$(m)"
 
-lock:          ## Перерахувати uv.lock після зміни залежностей
+lock:          ## Recompute uv.lock after changing dependencies
 	cd backend && uv lock
 
-reset:         ## Знести все разом з базою і файлами
+reset:         ## Tear everything down, including the database and files
 	docker compose down -v
 
-ps:            ## Статус контейнерів
+ps:            ## Container status
 	docker compose ps
 
-shell-db:      ## psql у контейнері бази
+shell-db:      ## psql in the database container
 	docker compose exec db psql -U vision -d vision_tasks
 
-shell-api:     ## Термінал у контейнері бекенду
+shell-api:     ## Shell in the backend container
 	docker compose exec backend bash

@@ -1,7 +1,7 @@
-"""Визначення того, як саме показувати файл у браузері.
+"""Decides exactly how a file is shown in the browser.
 
-Одне джерело правди: і схема (поле `preview` для фронтенду),
-і роут інлайн-перегляду користуються цими функціями.
+Single source of truth: both the schema (the `preview` field for the frontend)
+and the inline view route use these functions.
 """
 
 from pathlib import Path
@@ -41,14 +41,14 @@ def _normalize(content_type: str | None) -> str:
 
 
 def preview_kind(content_type: str | None, filename: str | None) -> PreviewKind | None:
-    """Як показувати файл: pdf / image / text, або None — лише завантаження."""
+    """How to show a file: pdf / image / text, or None for download only."""
     ct = _normalize(content_type)
     ext = Path(filename or "").suffix.lower()
 
     if ct == "application/pdf" or ext == ".pdf":
         return "pdf"
 
-    # SVG свідомо не показуємо інлайн — він може містити скрипти
+    # ! SVG is deliberately never shown inline — it may contain scripts
     if ct in IMAGE_TYPES or ext in EXT_TO_IMAGE:
         return "image"
 
@@ -59,10 +59,10 @@ def preview_kind(content_type: str | None, filename: str | None) -> PreviewKind 
 
 
 def inline_media_type(content_type: str | None, filename: str | None) -> str | None:
-    """MIME для інлайн-віддачі, або None якщо інлайн не дозволений.
+    """MIME type for inline serving, or None if inline is not allowed.
 
-    Тип навмисно не беремо напряму з того, що надіслав клієнт: інакше
-    HTML-файл виконався б у походженні API.
+    The type is intentionally not taken from what the client sent: otherwise
+    an HTML file would execute in the API's origin.
     """
     kind = preview_kind(content_type, filename)
     ct = _normalize(content_type)
@@ -77,7 +77,7 @@ def inline_media_type(content_type: str | None, filename: str | None) -> str | N
         return EXT_TO_IMAGE.get(ext)
 
     if kind == "text":
-        # будь-який текст (включно з .html) віддаємо як простий текст
+        # ! any text (including .html) is served as plain text
         return "text/plain; charset=utf-8"
 
     return None

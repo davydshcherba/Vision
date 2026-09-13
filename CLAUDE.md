@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-A student task dashboard: tasks (title, description, due date, status) with file attachments and in-page file preview. FastAPI + async SQLAlchemy + PostgreSQL backend, Next.js 15 (App Router, TypeScript, React 19) frontend, all run with Docker Compose. The README, code comments, UI strings and API error messages are in Ukrainian — keep new ones in Ukrainian too.
+A student task dashboard: tasks (title, description, due date, status) with file attachments and in-page file preview. FastAPI + async SQLAlchemy + PostgreSQL backend, Next.js 15 (App Router, TypeScript, React 19) frontend, all run with Docker Compose. The README and code comments are in English; UI strings and API error messages are in Ukrainian — keep new ones that way. Comments use [Better Comments](https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments) tags: `! ` for pitfalls and security notes, `* ` for important rationale, `? ` for open questions, `TODO` for pending work; plain comments otherwise. Docstrings and JSDoc stay untagged.
 
 ## Commands
 

@@ -1,4 +1,4 @@
-"""Логіка задач: вибірка, зміна, лічильники, видалення разом з файлами."""
+"""Task logic: querying, updating, counters, deletion together with files."""
 
 from datetime import date
 
@@ -27,7 +27,7 @@ async def list_tasks(
         pattern = f"%{query.strip()}%"
         stmt = stmt.where(or_(Task.title.ilike(pattern), Task.description.ilike(pattern)))
 
-    # Спочатку найближчі дедлайни, задачі без дати — в кінці
+    # * Nearest deadlines first, undated tasks at the end
     stmt = stmt.order_by(Task.due_date.asc().nullslast(), Task.created_at.desc())
 
     result = await session.execute(stmt)
@@ -50,7 +50,7 @@ async def create_task(session: AsyncSession, payload: TaskCreate) -> Task:
 
 
 async def update_task(session: AsyncSession, task: Task, payload: TaskUpdate) -> Task:
-    # exclude_unset: оновлюємо тільки те, що реально прислали
+    # * exclude_unset: update only what was actually sent
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(task, field, value)
 
@@ -60,7 +60,7 @@ async def update_task(session: AsyncSession, task: Task, payload: TaskUpdate) ->
 
 
 async def delete_task(session: AsyncSession, task: Task) -> None:
-    """Видаляє задачу разом із її файлами — і з бази, і з диска."""
+    """Deletes a task together with its files — both from the DB and from disk."""
     stored_names = [attachment.stored_name for attachment in task.attachments]
 
     await session.delete(task)

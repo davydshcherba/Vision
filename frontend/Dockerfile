@@ -2,7 +2,7 @@ FROM oven/bun:1-alpine
 
 WORKDIR /app
 
-# Спершу лише маніфести — шар із залежностями кешується між збірками.
+# * Manifests first — the dependency layer is cached between builds.
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
@@ -10,5 +10,5 @@ COPY . .
 
 EXPOSE 3000
 
-# --bun: next dev виконує рантайм bun, а не node-шим з образу.
+# * --bun: next dev runs on the bun runtime, not the image's node shim.
 CMD ["bun", "--bun", "run", "dev"]

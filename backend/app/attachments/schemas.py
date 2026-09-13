@@ -22,13 +22,13 @@ class AttachmentRead(BaseModel):
     @computed_field
     @property
     def view_url(self) -> str:
-        """Той самий файл, але для перегляду прямо в сторінці."""
+        """The same file, but for viewing right in the page."""
         return f"/api/attachments/{self.id}/view"
 
     @computed_field
     @property
     def preview(self) -> PreviewKind | None:
-        """Як фронтенд має показати файл. None — тільки завантаження."""
+        """How the frontend should show the file. None means download only."""
         return preview_kind(self.content_type, self.filename)
 
 
@@ -37,21 +37,21 @@ class AttachmentUpdate(BaseModel):
 
 
 class UploadError(BaseModel):
-    """Файл із пачки, який не вдалося зберегти."""
+    """A file from the batch that could not be saved."""
 
     filename: str
     error: str
 
 
 class UploadResult(BaseModel):
-    """Пачка завантажується частинами: що вдалось — зберігається."""
+    """A batch is uploaded partially: whatever succeeds is saved."""
 
     uploaded: list[AttachmentRead] = []
     failed: list[UploadError] = []
 
 
 class Limits(BaseModel):
-    """Обмеження сервера — фронтенд перевіряє файли ще до відправки."""
+    """Server limits — the frontend checks files before sending them."""
 
     max_upload_size: int
     max_files_per_task: int
