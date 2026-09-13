@@ -4,13 +4,13 @@ import { useEffect, useRef, useState } from "react";
 
 import FileDropzone from "@/components/FileDropzone";
 import FilePreview from "@/components/FilePreview";
+import { useI18n } from "@/components/LanguageProvider";
 import LinkifiedText from "@/components/LinkifiedText";
 import UploadProgress from "@/components/UploadProgress";
 import { attachmentUrl, attachmentViewUrl } from "@/lib/api";
 import { splitBySize } from "@/lib/files";
 import { daysLeft, deadlineLabel, formatDate, formatSize } from "@/lib/format";
 import {
-  STATUS_LABELS,
   STATUS_ORDER,
   type Limits,
   type Task,
@@ -43,6 +43,7 @@ export default function TaskDetail({
   onDeleteFile,
   onReject,
 }: Props) {
+  const { lang, t } = useI18n();
   const [selectedId, setSelectedId] = useState<number | null>(
     initialFileId ?? task.attachments[0]?.id ?? null,
   );
@@ -86,11 +87,11 @@ export default function TaskDetail({
 
   async function handleUpload(picked: File[]) {
     const room = limits.max_files_per_task - task.attachments.length;
-    const { accepted, rejected } = splitBySize(picked.slice(0, Math.max(room, 0)), limits);
+    const { accepted, rejected } = splitBySize(picked.slice(0, Math.max(room, 0)), limits, lang);
 
     const messages = [...rejected];
     if (picked.length > Math.max(room, 0)) {
-      messages.push(`Ліміт ${limits.max_files_per_task} файлів на задачу вичерпано`);
+      messages.push(t.detail.fileLimit(limits.max_files_per_task));
     }
     onReject(messages);
     if (accepted.length === 0) return;
@@ -106,7 +107,7 @@ export default function TaskDetail({
   }
 
   async function handleDeleteFile(id: number, name: string) {
-    if (!window.confirm(`Видалити файл «${name}»?`)) return;
+    if (!window.confirm(t.detail.confirmDeleteFile(name))) return;
     setBusy(true);
     try {
       await onDeleteFile(id);
@@ -146,16 +147,16 @@ export default function TaskDetail({
           <div className="modal-head-text">
             <h2 className="modal-title">{task.title}</h2>
             <div className="task-meta" style={{ marginTop: 8 }}>
-              <span className={`badge ${task.status}`}>{STATUS_LABELS[task.status]}</span>
-              <span className="badge date">{formatDate(task.due_date)}</span>
+              <span className={`badge ${task.status}`}>{t.status[task.status]}</span>
+              <span className="badge date">{formatDate(task.due_date, lang)}</span>
               {task.due_date && (
                 <span className={`badge ${overdue ? "overdue" : "date"}`}>
-                  {deadlineLabel(task.due_date)}
+                  {deadlineLabel(task.due_date, lang)}
                 </span>
               )}
             </div>
           </div>
-          <button className="modal-close" onClick={onClose} aria-label="Закрити">
+          <button className="modal-close" onClick={onClose} aria-label={t.common.close}>
             ×
           </button>
         </header>
@@ -163,18 +164,18 @@ export default function TaskDetail({
         <div className="modal-body">
           <aside className="modal-side">
             <div className="side-block">
-              <div className="side-label">Опис</div>
+              <div className="side-label">{t.common.description}</div>
               {task.description ? (
                 <p className="side-text">
                   <LinkifiedText text={task.description} />
                 </p>
               ) : (
-                <p className="side-text muted">Опису немає</p>
+                <p className="side-text muted">{t.detail.noDescription}</p>
               )}
             </div>
 
             <div className="side-block">
-              <div className="side-label">Статус</div>
+              <div className="side-label">{t.common.status}</div>
               <select
                 className="select"
                 value={task.status}
@@ -183,7 +184,7 @@ export default function TaskDetail({
               >
                 {STATUS_ORDER.map((value) => (
                   <option key={value} value={value}>
-                    {STATUS_LABELS[value]}
+                    {t.status[value]}
                   </option>
                 ))}
               </select>
@@ -191,11 +192,11 @@ export default function TaskDetail({
 
             <div className="side-block">
               <div className="side-label">
-                Файли ({task.attachments.length}/{limits.max_files_per_task})
+                {t.common.files} ({task.attachments.length}/{limits.max_files_per_task})
               </div>
 
               {task.attachments.length === 0 ? (
-                <p className="side-text muted">Ще нічого не прикріплено</p>
+                <p className="side-text muted">{t.detail.nothingAttached}</p>
               ) : (
                 <ul className="file-picker">
                   {task.attachments.map((file) => (
@@ -215,13 +216,13 @@ export default function TaskDetail({
                           </span>
                         )}
                         <span className="file-pick-name">{file.filename}</span>
-                        <span className="file-size">{formatSize(file.size)}</span>
+                        <span className="file-size">{formatSize(file.size, lang)}</span>
                       </button>
                       <button
                         className="file-remove"
                         onClick={() => handleDeleteFile(file.id, file.filename)}
                         disabled={busy}
-                        aria-label={`Видалити ${file.filename}`}
+                        aria-label={t.detail.deleteFileLabel(file.filename)}
                       >
                         ×
                       </button>
@@ -235,15 +236,19 @@ export default function TaskDetail({
                   onFiles={handleUpload}
                   disabled={busy}
                   compact
-                  label={busy ? "Зачекайте..." : "Додати файл або перетягнути сюди"}
+                  label={busy ? t.detail.wait : t.detail.addFile}
                 />
               </div>
               <UploadProgress percent={progress} />
             </div>
 
             <div className="side-block side-dates">
-              <div>Створено: {new Date(task.created_at).toLocaleString("uk-UA")}</div>
-              <div>Оновлено: {new Date(task.updated_at).toLocaleString("uk-UA")}</div>
+              <div>
+                {t.detail.created}: {new Date(task.created_at).toLocaleString(t.locale)}
+              </div>
+              <div>
+                {t.detail.updated}: {new Date(task.updated_at).toLocaleString(t.locale)}
+              </div>
             </div>
           </aside>
 
@@ -269,17 +274,17 @@ export default function TaskDetail({
                         onClick={saveRename}
                         disabled={busy || !draftName.trim()}
                       >
-                        Зберегти
+                        {t.common.save}
                       </button>
                       <button className="btn btn-ghost btn-sm" onClick={() => setRenaming(false)}>
-                        Скасувати
+                        {t.common.cancel}
                       </button>
                     </div>
                   </>
                 ) : (
                   <>
                     <span className="preview-name">{selected.filename}</span>
-                    <span className="file-size">{formatSize(selected.size)}</span>
+                    <span className="file-size">{formatSize(selected.size, lang)}</span>
                     <div className="preview-bar-actions">
                       <button
                         className="btn btn-ghost btn-sm"
@@ -289,7 +294,7 @@ export default function TaskDetail({
                         }}
                         disabled={busy}
                       >
-                        Перейменувати
+                        {t.detail.rename}
                       </button>
                       <a
                         className="btn btn-ghost btn-sm"
@@ -297,10 +302,10 @@ export default function TaskDetail({
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        Відкрити у вкладці
+                        {t.detail.openInTab}
                       </a>
                       <a className="btn btn-ghost btn-sm" href={attachmentUrl(selected)} download>
-                        Завантажити
+                        {t.common.download}
                       </a>
                     </div>
                   </>

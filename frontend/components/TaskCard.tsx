@@ -2,12 +2,12 @@
 
 import { useState, type DragEvent } from "react";
 
+import { useI18n } from "@/components/LanguageProvider";
 import LinkifiedText from "@/components/LinkifiedText";
 import UploadProgress from "@/components/UploadProgress";
 import { splitBySize } from "@/lib/files";
 import { daysLeft, deadlineLabel, formatDateShort } from "@/lib/format";
 import {
-  STATUS_LABELS,
   STATUS_ORDER,
   type Limits,
   type Task,
@@ -45,6 +45,7 @@ export default function TaskCard({
   onOpen,
   onReject,
 }: Props) {
+  const { lang, t } = useI18n();
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
@@ -93,7 +94,7 @@ export default function TaskCard({
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Видалити задачу «${task.title}» разом з файлами?`)) return;
+    if (!window.confirm(t.card.confirmDelete(task.title))) return;
     setBusy(true);
     try {
       await onDelete(task.id);
@@ -103,7 +104,7 @@ export default function TaskCard({
   }
 
   async function handleUpload(picked: File[]) {
-    const { accepted, rejected } = splitBySize(picked, limits);
+    const { accepted, rejected } = splitBySize(picked, limits, lang);
     onReject(rejected);
     if (accepted.length === 0) return;
 
@@ -156,7 +157,7 @@ export default function TaskCard({
       {editing ? (
         <div className="form-grid">
           <div className="field">
-            <label htmlFor={`t-${task.id}`}>Назва</label>
+            <label htmlFor={`t-${task.id}`}>{t.card.title}</label>
             <input
               id={`t-${task.id}`}
               className="input"
@@ -166,7 +167,7 @@ export default function TaskCard({
             />
           </div>
           <div className="field">
-            <label htmlFor={`d-${task.id}`}>Опис</label>
+            <label htmlFor={`d-${task.id}`}>{t.common.description}</label>
             <textarea
               id={`d-${task.id}`}
               className="textarea"
@@ -175,7 +176,7 @@ export default function TaskCard({
             />
           </div>
           <div className="field">
-            <label htmlFor={`dd-${task.id}`}>Дата виконання</label>
+            <label htmlFor={`dd-${task.id}`}>{t.common.dueDate}</label>
             <input
               id={`dd-${task.id}`}
               type="date"
@@ -190,14 +191,14 @@ export default function TaskCard({
               onClick={saveEdits}
               disabled={busy || !title.trim()}
             >
-              Зберегти
+              {t.common.save}
             </button>
             <button
               className="btn btn-ghost btn-sm"
               onClick={() => setEditing(false)}
               disabled={busy}
             >
-              Скасувати
+              {t.common.cancel}
             </button>
           </div>
         </div>
@@ -205,11 +206,11 @@ export default function TaskCard({
         <>
           <div className="task-top">
             <span className={`due ${overdue ? "late" : dueSoon ? "soon" : task.due_date ? "" : "none"}`}>
-              {formatDateShort(task.due_date)}
+              {formatDateShort(task.due_date, lang)}
             </span>
             {task.due_date && task.status !== "done" && (
               <span className={`due-rel ${overdue ? "late" : dueSoon ? "soon" : ""}`}>
-                {deadlineLabel(task.due_date)}
+                {deadlineLabel(task.due_date, lang)}
               </span>
             )}
           </div>
@@ -232,8 +233,8 @@ export default function TaskCard({
                 className="icon-btn"
                 onClick={() => changeStatus(previous)}
                 disabled={busy || !previous}
-                title={previous ? `Перенести: ${STATUS_LABELS[previous]}` : undefined}
-                aria-label={previous ? `Перенести в «${STATUS_LABELS[previous]}»` : "Ліва колонка"}
+                title={previous ? t.card.moveTitle(t.status[previous]) : undefined}
+                aria-label={previous ? t.card.moveLabel(t.status[previous]) : t.card.leftColumn}
               >
                 ←
               </button>
@@ -241,8 +242,8 @@ export default function TaskCard({
                 className="icon-btn"
                 onClick={() => changeStatus(next)}
                 disabled={busy || !next}
-                title={next ? `Перенести: ${STATUS_LABELS[next]}` : undefined}
-                aria-label={next ? `Перенести в «${STATUS_LABELS[next]}»` : "Права колонка"}
+                title={next ? t.card.moveTitle(t.status[next]) : undefined}
+                aria-label={next ? t.card.moveLabel(t.status[next]) : t.card.rightColumn}
               >
                 →
               </button>
@@ -252,25 +253,26 @@ export default function TaskCard({
               <button
                 className="link-btn"
                 onClick={() => onOpen(task.id)}
-                aria-label={`Файли задачі (${task.attachments.length})`}
+                aria-label={t.card.filesLabel(task.attachments.length)}
               >
-                Файли{task.attachments.length > 0 && ` (${task.attachments.length})`}
+                {t.common.files}
+                {task.attachments.length > 0 && ` (${task.attachments.length})`}
               </button>
               <button
                 className="link-btn"
                 onClick={startEditing}
                 disabled={busy}
-                aria-label="Змінити задачу"
+                aria-label={t.card.editLabel}
               >
-                Змінити
+                {t.card.edit}
               </button>
               <button
                 className="link-btn"
                 onClick={handleDelete}
                 disabled={busy}
-                aria-label="Видалити задачу"
+                aria-label={t.card.deleteLabel}
               >
-                Видалити
+                {t.card.delete}
               </button>
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { useI18n } from "@/components/LanguageProvider";
 import { attachmentUrl, attachmentViewUrl, fetchAttachmentText } from "@/lib/api";
 import { formatSize } from "@/lib/format";
 import type { Attachment } from "@/lib/types";
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function FilePreview({ file, textLimit }: Props) {
+  const { lang, t } = useI18n();
   const [text, setText] = useState<string | null>(null);
   const [truncated, setTruncated] = useState(false);
   const [textError, setTextError] = useState<string | null>(null);
@@ -34,19 +36,19 @@ export default function FilePreview({ file, textLimit }: Props) {
         setText(content.text);
         setTruncated(content.truncated);
       })
-      .catch((err) => !cancelled && setTextError(err instanceof Error ? err.message : "Помилка"));
+      .catch((err) => !cancelled && setTextError(err instanceof Error ? err.message : t.common.error));
 
     return () => {
       cancelled = true;
     };
-  }, [file, textLimit]);
+  }, [file, textLimit, t]);
 
   if (!file) {
     return (
       <div className="preview-empty">
-        <span className="preview-empty-kicker">Попередній перегляд</span>
-        <strong>Файлів поки немає</strong>
-        Прикріпи PDF, картинку чи конспект — тут його можна буде одразу переглянути.
+        <span className="preview-empty-kicker">{t.preview.kicker}</span>
+        <strong>{t.preview.noFiles}</strong>
+        {t.preview.noFilesHint}
       </div>
     );
   }
@@ -75,14 +77,13 @@ export default function FilePreview({ file, textLimit }: Props) {
       return <div className="preview-empty">{textError}</div>;
     }
     if (text === null) {
-      return <div className="preview-empty">Завантаження...</div>;
+      return <div className="preview-empty">{t.common.loading}</div>;
     }
     return (
       <div className="preview-scroll">
         {truncated && (
           <div className="preview-notice">
-            Показані перші {formatSize(textLimit)} з {formatSize(file.size)} — щоб побачити все,
-            завантаж файл.
+            {t.preview.truncated(formatSize(textLimit, lang), formatSize(file.size, lang))}
           </div>
         )}
         <pre className="preview-text">{text}</pre>
@@ -92,11 +93,11 @@ export default function FilePreview({ file, textLimit }: Props) {
 
   return (
     <div className="preview-empty">
-      <span className="preview-empty-kicker">{file.filename.includes(".") ? file.filename.split(".").pop() : "Файл"}</span>
-      <strong>Цей формат не показується в браузері</strong>
-      {file.filename} · {formatSize(file.size)}
+      <span className="preview-empty-kicker">{file.filename.includes(".") ? file.filename.split(".").pop() : t.preview.file}</span>
+      <strong>{t.preview.unsupported}</strong>
+      {file.filename} · {formatSize(file.size, lang)}
       <a className="btn btn-primary" href={attachmentUrl(file)} download style={{ marginTop: 20 }}>
-        Завантажити файл
+        {t.preview.downloadFile}
       </a>
     </div>
   );

@@ -7,14 +7,30 @@ import type {
   TaskStatus,
   UploadResult,
 } from "./types";
+import { DEFAULT_LANG, dictionaries, type Lang } from "./i18n";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+// * The backend localizes its error messages by Accept-Language
+let language: Lang = DEFAULT_LANG;
+
+export function setApiLanguage(lang: Lang) {
+  language = lang;
+}
+
+function messages() {
+  return dictionaries[language].api;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, { cache: "no-store", ...init });
+  const response = await fetch(`${API_URL}${path}`, {
+    cache: "no-store",
+    ...init,
+    headers: { "Accept-Language": language, ...init?.headers },
+  });
 
   if (!response.ok) {
-    let message = `Помилка ${response.status}`;
+    let message = messages().status(response.status);
     try {
       const body = await response.json();
       if (body?.detail) {
@@ -90,6 +106,7 @@ export function uploadAttachments(
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${API_URL}/api/tasks/${taskId}/attachments`);
+    xhr.setRequestHeader("Accept-Language", language);
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {
@@ -111,11 +128,11 @@ export function uploadAttachments(
       }
 
       const detail = (body as { detail?: unknown } | null)?.detail;
-      reject(new Error(typeof detail === "string" ? detail : `Помилка ${xhr.status}`));
+      reject(new Error(typeof detail === "string" ? detail : messages().status(xhr.status)));
     };
 
-    xhr.onerror = () => reject(new Error("Не вдалося зʼєднатися з сервером"));
-    xhr.onabort = () => reject(new Error("Завантаження скасовано"));
+    xhr.onerror = () => reject(new Error(messages().network));
+    xhr.onabort = () => reject(new Error(messages().aborted));
 
     xhr.send(form);
   });
@@ -162,7 +179,7 @@ export async function fetchAttachmentText(
   });
 
   if (!response.ok) {
-    throw new Error(`Не вдалося прочитати файл (${response.status})`);
+    throw new Error(messages().readFailed(response.status));
   }
 
   return { text: decodeText(await response.arrayBuffer(), truncated), truncated };

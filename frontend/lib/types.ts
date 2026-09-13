@@ -65,10 +65,4 @@ export interface TaskInput {
   status?: TaskStatus;
 }
 
-export const STATUS_LABELS: Record<TaskStatus, string> = {
-  todo: "До виконання",
-  in_progress: "В роботі",
-  done: "Виконано",
-};
-
 export const STATUS_ORDER: TaskStatus[] = ["todo", "in_progress", "done"];

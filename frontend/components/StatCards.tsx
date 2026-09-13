@@ -1,22 +1,25 @@
 "use client";
 
+import { useI18n } from "@/components/LanguageProvider";
 import type { Stats } from "@/lib/types";
 
-const CARDS: { key: keyof Stats; label: string; className: string }[] = [
-  { key: "total", label: "Усього задач", className: "" },
-  { key: "todo", label: "До виконання", className: "accent" },
-  { key: "in_progress", label: "В роботі", className: "progress" },
-  { key: "done", label: "Виконано", className: "done" },
-  { key: "overdue", label: "Прострочено", className: "overdue" },
+const CARDS: { key: keyof Stats; className: string }[] = [
+  { key: "total", className: "" },
+  { key: "todo", className: "accent" },
+  { key: "in_progress", className: "progress" },
+  { key: "done", className: "done" },
+  { key: "overdue", className: "overdue" },
 ];
 
 export default function StatCards({ stats }: { stats: Stats | null }) {
+  const { t } = useI18n();
+
   return (
     <section className="stats">
       {CARDS.map((card) => (
         <div key={card.key} className={`stat ${card.className}`}>
           <div className="stat-value">{stats ? stats[card.key] : "—"}</div>
-          <div className="stat-label">{card.label}</div>
+          <div className="stat-label">{t.stats[card.key]}</div>
         </div>
       ))}
     </section>

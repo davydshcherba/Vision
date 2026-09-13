@@ -114,6 +114,17 @@ select {
   color: var(--text-muted);
 }
 
+.masthead-end {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.lang-switch {
+  display: flex;
+  gap: 10px;
+}
+
 .header {
   display: flex;
   flex-wrap: wrap;

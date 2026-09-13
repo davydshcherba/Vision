@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Playfair_Display } from "next/font/google";
 import type { ReactNode } from "react";
+
+import LanguageProvider from "@/components/LanguageProvider";
 import "./globals.css";
 
 // * High-contrast serif for headings — supports Cyrillic, unlike Bodoni
@@ -20,7 +22,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="uk" className={display.variable}>
-      <body>{children}</body>
+      <body>
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

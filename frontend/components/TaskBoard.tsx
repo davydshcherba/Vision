@@ -2,21 +2,10 @@
 
 import { useState, type CSSProperties, type DragEvent } from "react";
 
+import { useI18n } from "@/components/LanguageProvider";
 import TaskCard from "@/components/TaskCard";
 import { daysLeft } from "@/lib/format";
-import {
-  STATUS_LABELS,
-  type Limits,
-  type Task,
-  type TaskInput,
-  type TaskStatus,
-} from "@/lib/types";
-
-const EMPTY_HINTS: Record<TaskStatus, string> = {
-  todo: "Нічого не чекає",
-  in_progress: "Нічого в роботі",
-  done: "Ще нічого не завершено",
-};
+import type { Limits, Task, TaskInput, TaskStatus } from "@/lib/types";
 
 /** Nearest deadline first; undated at the end; among equals, newer on top. */
 function byDeadline(a: Task, b: Task): number {
@@ -45,6 +34,7 @@ interface Props {
 }
 
 export default function TaskBoard({ tasks, columns, ...card }: Props) {
+  const { t } = useI18n();
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [overColumn, setOverColumn] = useState<TaskStatus | null>(null);
 
@@ -88,18 +78,18 @@ export default function TaskBoard({ tasks, columns, ...card }: Props) {
           >
             <header className="column-head">
               <span className="column-dot" aria-hidden />
-              <h2 className="column-title">{STATUS_LABELS[status]}</h2>
+              <h2 className="column-title">{t.status[status]}</h2>
               <span className="column-count">{items.length}</span>
               {late > 0 && (
-                <span className="column-late" title="Прострочені задачі">
-                  {late} прострочено
+                <span className="column-late" title={t.board.overdueTitle}>
+                  {t.board.overdueCount(late)}
                 </span>
               )}
             </header>
 
             <div className="column-body">
               {items.length === 0 ? (
-                <p className="column-empty">{EMPTY_HINTS[status]}</p>
+                <p className="column-empty">{t.board.empty[status]}</p>
               ) : (
                 items.map((task) => (
                   <TaskCard

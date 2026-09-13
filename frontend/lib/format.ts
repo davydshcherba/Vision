@@ -1,21 +1,20 @@
-const MONTHS = [
-  "січня", "лютого", "березня", "квітня", "травня", "червня",
-  "липня", "серпня", "вересня", "жовтня", "листопада", "грудня",
-];
+import { dictionaries, type Lang } from "./i18n";
 
-export function formatDate(iso: string | null): string {
-  if (!iso) return "Без дедлайну";
+export function formatDate(iso: string | null, lang: Lang): string {
+  const t = dictionaries[lang].format;
+  if (!iso) return t.noDeadline;
   const [year, month, day] = iso.split("-").map(Number);
   if (!year || !month || !day) return iso;
-  return `${day} ${MONTHS[month - 1]} ${year}`;
+  return `${day} ${t.months[month - 1]} ${year}`;
 }
 
 /** The same for a card: the year is shown only if it isn't the current one. */
-export function formatDateShort(iso: string | null): string {
-  if (!iso) return "Без дедлайну";
+export function formatDateShort(iso: string | null, lang: Lang): string {
+  const t = dictionaries[lang].format;
+  if (!iso) return t.noDeadline;
   const [year, month, day] = iso.split("-").map(Number);
   if (!year || !month || !day) return iso;
-  const label = `${day} ${MONTHS[month - 1]}`;
+  const label = `${day} ${t.months[month - 1]}`;
   return year === new Date().getFullYear() ? label : `${label} ${year}`;
 }
 
@@ -28,18 +27,20 @@ export function daysLeft(iso: string | null): number | null {
   return Math.round((due.getTime() - today.getTime()) / 86_400_000);
 }
 
-export function deadlineLabel(iso: string | null): string {
+export function deadlineLabel(iso: string | null, lang: Lang): string {
+  const t = dictionaries[lang].format;
   const days = daysLeft(iso);
-  if (days === null) return "Без дедлайну";
-  if (days === 0) return "Сьогодні";
-  if (days === 1) return "Завтра";
-  if (days === -1) return "Вчора";
-  if (days < 0) return `Прострочено на ${Math.abs(days)} дн.`;
-  return `Через ${days} дн.`;
+  if (days === null) return t.noDeadline;
+  if (days === 0) return t.today;
+  if (days === 1) return t.tomorrow;
+  if (days === -1) return t.yesterday;
+  if (days < 0) return t.overdueBy(Math.abs(days));
+  return t.inDays(days);
 }
 
-export function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} Б`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} КБ`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} МБ`;
+export function formatSize(bytes: number, lang: Lang): string {
+  const [b, kb, mb] = dictionaries[lang].format.sizeUnits;
+  if (bytes < 1024) return `${bytes} ${b}`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} ${kb}`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} ${mb}`;
 }

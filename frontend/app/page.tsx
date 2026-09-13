@@ -2,14 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { useI18n } from "@/components/LanguageProvider";
 import StatCards from "@/components/StatCards";
 import TaskBoard from "@/components/TaskBoard";
 import TaskDetail from "@/components/TaskDetail";
 import TaskForm from "@/components/TaskForm";
 import * as api from "@/lib/api";
+import { LANGS } from "@/lib/i18n";
 import {
   DEFAULT_LIMITS,
-  STATUS_LABELS,
   STATUS_ORDER,
   type Limits,
   type Stats,
@@ -21,12 +22,8 @@ import {
 
 type Filter = TaskStatus | "all";
 
-const TABS: { value: Filter; label: string }[] = [
-  { value: "all", label: "Уся дошка" },
-  ...STATUS_ORDER.map((value) => ({ value: value as Filter, label: STATUS_LABELS[value] })),
-];
-
 export default function DashboardPage() {
+  const { lang, setLang, t } = useI18n();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [limits, setLimits] = useState<Limits>(DEFAULT_LIMITS);
@@ -61,14 +58,12 @@ export default function DashboardPage() {
       setError(null);
     } catch (err) {
       setError(
-        err instanceof Error
-          ? `${err.message}. Перевір, чи запущений бекенд на ${api.API_URL}`
-          : "Невідома помилка",
+        err instanceof Error ? t.page.backendDown(err.message, api.API_URL) : t.common.unknownError,
       );
     } finally {
       setLoading(false);
     }
-  }, [filter, debouncedSearch]);
+  }, [filter, debouncedSearch, t]);
 
   useEffect(() => {
     void refresh();
@@ -79,7 +74,7 @@ export default function DashboardPage() {
       await action();
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Невідома помилка");
+      setError(err instanceof Error ? err.message : t.common.unknownError);
     }
   }
 
@@ -110,25 +105,44 @@ export default function DashboardPage() {
     });
   }
 
+  const tabs: { value: Filter; label: string }[] = [
+    { value: "all", label: t.page.allBoard },
+    ...STATUS_ORDER.map((value) => ({ value: value as Filter, label: t.status[value] })),
+  ];
+
   const openTask = open ? (tasks.find((t) => t.id === open.taskId) ?? null) : null;
 
   return (
     <main className="page">
       <nav className="masthead">
-        <span className="eyebrow">Дашборд студента</span>
+        <span className="eyebrow">{t.page.eyebrow}</span>
         <span className="wordmark">Vision</span>
-        <span className="eyebrow">{stats ? `${stats.total} задач` : "—"}</span>
+        <div className="masthead-end">
+          <span className="eyebrow">{stats ? t.page.taskCount(stats.total) : "—"}</span>
+          <div className="lang-switch" role="group" aria-label={t.page.language}>
+            {LANGS.map((option) => (
+              <button
+                key={option.value}
+                className={`tab ${lang === option.value ? "active" : ""}`}
+                onClick={() => setLang(option.value)}
+                aria-pressed={lang === option.value}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </nav>
 
       <header className="header">
         <div>
           <h1>
-            Мої <em>задачі</em>
+            {t.page.titleStart} <em>{t.page.titleAccent}</em>
           </h1>
-          <p>Перетягуй картки між колонками — у кожній спершу найближчі дедлайни.</p>
+          <p>{t.page.subtitle}</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "Закрити форму" : "Нова задача"}
+          {showForm ? t.page.closeForm : t.page.newTask}
         </button>
       </header>
 
@@ -139,14 +153,14 @@ export default function DashboardPage() {
       {notice.length > 0 && (
         <div className="notice">
           <div>
-            <strong>Не всі файли додано:</strong>
+            <strong>{t.page.notAllFiles}</strong>
             <ul>
               {notice.map((message) => (
                 <li key={message}>{message}</li>
               ))}
             </ul>
           </div>
-          <button className="notice-close" onClick={() => setNotice([])} aria-label="Закрити">
+          <button className="notice-close" onClick={() => setNotice([])} aria-label={t.common.close}>
             ×
           </button>
         </div>
@@ -158,7 +172,7 @@ export default function DashboardPage() {
 
       <div className="filters">
         <div className="tabs">
-          {TABS.map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.value}
               className={`tab ${filter === tab.value ? "active" : ""}`}
@@ -171,20 +185,20 @@ export default function DashboardPage() {
         <input
           className="input search"
           type="search"
-          placeholder="Пошук за назвою або описом..."
+          placeholder={t.page.search}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
       {loading ? (
-        <div className="loading">Завантаження...</div>
+        <div className="loading">{t.common.loading}</div>
       ) : tasks.length === 0 ? (
         <div className="empty">
-          <strong>{debouncedSearch || filter !== "all" ? "Нічого не знайдено" : "Задач поки немає"}</strong>
+          <strong>{debouncedSearch || filter !== "all" ? t.page.nothingFound : t.page.noTasks}</strong>
           {debouncedSearch || filter !== "all"
-            ? "Спробуй змінити фільтр або пошуковий запит."
-            : "Натисни «Нова задача», щоб додати перше завдання."}
+            ? t.page.tryFilter
+            : t.page.addFirst}
         </div>
       ) : (
         <TaskBoard
