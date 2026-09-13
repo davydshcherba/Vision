@@ -114,13 +114,21 @@ export default function DashboardPage() {
 
   return (
     <main className="page">
+      <nav className="masthead">
+        <span className="eyebrow">Дашборд студента</span>
+        <span className="wordmark">Vision</span>
+        <span className="eyebrow">{stats ? `${stats.total} задач` : "—"}</span>
+      </nav>
+
       <header className="header">
         <div>
-          <h1>Мої задачі</h1>
+          <h1>
+            Мої <em>задачі</em>
+          </h1>
           <p>Перетягуй картки між колонками — у кожній спершу найближчі дедлайни.</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "Закрити форму" : "+ Нова задача"}
+          {showForm ? "Закрити форму" : "Нова задача"}
         </button>
       </header>
 

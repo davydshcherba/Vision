@@ -1,6 +1,16 @@
 import type { Metadata } from "next";
+import { Playfair_Display } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
+
+// Контрастна антиква для заголовків — з кирилицею, на відміну від Bodoni
+const display = Playfair_Display({
+  subsets: ["latin", "cyrillic"],
+  weight: ["400", "500"],
+  style: ["normal", "italic"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Дашборд задач студента",
@@ -9,7 +19,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="uk">
+    <html lang="uk" className={display.variable}>
       <body>{children}</body>
     </html>
   );
