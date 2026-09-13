@@ -6,6 +6,7 @@ from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.config import settings
+from ..core.i18n import t
 from ..models.attachment import Attachment
 from ..models.task import Task
 from ..schemas.attachment import Limits, UploadError, UploadResult
@@ -24,7 +25,7 @@ def current_limits() -> Limits:
 async def get_attachment(session: AsyncSession, attachment_id: int) -> Attachment:
     attachment = await session.get(Attachment, attachment_id)
     if attachment is None:
-        raise HTTPException(status_code=404, detail="Файл не знайдено")
+        raise HTTPException(status_code=404, detail=t("file_not_found"))
     return attachment
 
 
@@ -32,7 +33,7 @@ def file_path(attachment: Attachment) -> Path:
     """Path to the file on disk; 404 if the DB row exists but the file is gone."""
     path = settings.upload_path / attachment.stored_name
     if not path.is_file():
-        raise HTTPException(status_code=404, detail="Файл відсутній на диску")
+        raise HTTPException(status_code=404, detail=t("file_missing_on_disk"))
     return path
 
 
@@ -61,7 +62,7 @@ async def save_uploads(
                 failed.append(
                     UploadError(
                         filename=name,
-                        error=f"Ліміт {settings.max_files_per_task} файлів на задачу вичерпано",
+                        error=t("file_limit_reached", limit=settings.max_files_per_task),
                     )
                 )
                 continue
@@ -80,7 +81,7 @@ async def save_uploads(
                 failed.append(
                     UploadError(
                         filename=name,
-                        error=f"Перевищено сумарний ліміт задачі ({limit_mb} МБ)",
+                        error=t("task_storage_exceeded", limit_mb=limit_mb),
                     )
                 )
                 continue
@@ -102,7 +103,7 @@ async def save_uploads(
             detail = "; ".join(f"{f.filename}: {f.error}" for f in failed)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=detail or "Не вдалося завантажити жодного файлу",
+                detail=detail or t("nothing_uploaded"),
             )
 
         await session.commit()
@@ -124,7 +125,7 @@ async def rename_attachment(
     """Renames a file. Nothing moves on disk — the name there is internal."""
     name = safe_filename(filename)
     if not name:
-        raise HTTPException(status_code=422, detail="Порожня назва файлу")
+        raise HTTPException(status_code=422, detail=t("empty_filename"))
 
     attachment.filename = name
     await session.commit()

@@ -93,6 +93,14 @@ async def test_stats_counts_overdue_but_ignores_done(client):
     assert stats == {"total": 3, "todo": 1, "in_progress": 1, "done": 1, "overdue": 1}
 
 
+async def test_errors_follow_accept_language(client):
+    default = await client.get("/api/tasks/9999")
+    english = await client.get("/api/tasks/9999", headers={"Accept-Language": "en-GB,en;q=0.9"})
+
+    assert default.json()["detail"] == "Задачу не знайдено"
+    assert english.json()["detail"] == "Task not found"
+
+
 async def test_limits_endpoint(client):
     limits = (await client.get("/api/limits")).json()
 

@@ -7,6 +7,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.config import settings
+from ..core.i18n import t
 from ..models.task import Task, TaskStatus
 from ..schemas.task import Stats, TaskCreate, TaskUpdate
 from .storage import delete_file
@@ -37,7 +38,7 @@ async def list_tasks(
 async def get_task(session: AsyncSession, task_id: int) -> Task:
     task = await session.get(Task, task_id)
     if task is None:
-        raise HTTPException(status_code=404, detail="Задачу не знайдено")
+        raise HTTPException(status_code=404, detail=t("task_not_found"))
     return task
 
 

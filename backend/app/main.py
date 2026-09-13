@@ -1,10 +1,11 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from .core.config import settings
 from .core.database import engine
+from .core.i18n import current_lang, pick_language
 from .routers.attachments import router as attachments_router
 from .routers.tasks import router as tasks_router
 
@@ -32,6 +33,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def set_language(request: Request, call_next):
+    # * Error messages follow the client's Accept-Language (uk by default)
+    token = current_lang.set(pick_language(request.headers.get("accept-language")))
+    try:
+        return await call_next(request)
+    finally:
+        current_lang.reset(token)
+
 
 app.include_router(tasks_router)
 app.include_router(attachments_router)

@@ -3,6 +3,8 @@ from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
 
+from ..core.i18n import t
+
 CHUNK_SIZE = 1024 * 1024
 
 
@@ -22,7 +24,7 @@ async def save_upload(file: UploadFile, upload_dir: Path, max_size: int) -> tupl
                 if size > max_size:
                     raise HTTPException(
                         status_code=413,
-                        detail=f"Файл завеликий, максимум {max_size // (1024 * 1024)} МБ",
+                        detail=t("file_too_large", limit_mb=max_size // (1024 * 1024)),
                     )
                 out.write(chunk)
     except Exception:
@@ -33,7 +35,7 @@ async def save_upload(file: UploadFile, upload_dir: Path, max_size: int) -> tupl
 
     if size == 0:
         target.unlink(missing_ok=True)
-        raise HTTPException(status_code=400, detail="Порожній файл")
+        raise HTTPException(status_code=400, detail=t("empty_file"))
 
     return stored_name, size
 
